@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1a21">
+<title>Housebets Sportsbook · Prototype</title>
+<meta name="description" content="Housebets Sportsbook clickable prototype. Sample data only, no real money.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1a21'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-family='Arial Black,Arial' font-weight='900' font-size='38' fill='%2300f5ff'%3EH%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;}
+*{-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid #c3f4f1;outline-offset:2px}
+input::placeholder{color:#7d8b96}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#233036;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+
+body{margin:0;background:#07141a}
+@keyframes hbTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes hbPing{0%{transform:scale(1);opacity:.7}80%,100%{transform:scale(2.6);opacity:0}}
+@keyframes hbRoll{from{transform:translateY(70%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes hbIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes hbSheet{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
+@keyframes hbSpin{to{transform:rotate(360deg)}}
+@keyframes hbPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+
+.hb-card{border-radius:10px!important}
+.hb-lift{position:relative;transition:border-color .18s,background-color .18s}
+.hb-lift:hover{border-color:#2b4652!important}
+.hb-nav{position:relative;transition:background-color .15s,color .15s}
+.hb-nav::after,.hb-lift::after{content:'';position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,0);transition:background .15s;pointer-events:none}
+.hb-nav:hover::after,.hb-lift:hover::after{background:rgba(255,255,255,.035)}
+.hb-odd{transition:background .15s,border-color .3s,color .15s!important}
+.hb-odd:not(:disabled):hover{background:#22363f!important}
+.hb-odd[aria-pressed="true"]:hover{background:#d4f8f5!important}
+.hb-odd:not(:disabled):active{transform:scale(.985)}
+.hb-sport .hb-well{transition:background .15s, transform .15s}
+.hb-sport:hover .hb-well{background-color:#1a3340!important;transform:translateY(-1px)}
+.hb-sport:active .hb-well{transform:scale(.96)}
+.hb-tile{transition:border-color .18s,background-color .18s}
+.hb-tile:hover{border-color:#2b4652!important;background-color:#11252f!important}
+.hb-cta{transition:filter .15s,transform .1s}
+.hb-cta:not(:disabled):hover{filter:brightness(1.05)}
+.hb-cta:not(:disabled):active{transform:scale(.99)}
+.hb-gloss{background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 60%)!important}
+.hb-gloss:disabled{background-image:none!important}
+.hb-chip{transition:border-color .15s}
+.hb-chip:hover{border-color:#3b5966!important}
+
+#proto{position:fixed;z-index:999;left:252px;bottom:14px;font-family:'JetBrains Mono',monospace}
+#proto>button{display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:18px;border:1px solid #2b6a6f;background:#0d1f29;color:#c3f4f1;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#proto .menu{display:none;position:absolute;left:0;bottom:44px;width:260px;padding:8px;border-radius:12px;background:#0d1f29;border:1px solid #233036;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#proto.open .menu{display:block}
+#proto .menu span{display:block;padding:8px 10px 6px;color:#8a96a4;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+#proto .menu a{display:block;padding:10px;border-radius:8px;color:#f2fbff;font:600 13px Inter,sans-serif;text-decoration:none}
+#proto .menu a:hover{background:#13394c}
+@media (max-width:759px){#proto{left:auto;right:8px;bottom:auto;top:65px}#proto>button{height:30px;padding:0 10px;font-size:10px;opacity:.92}#proto .menu{left:auto;right:0;bottom:auto;top:38px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<template id="tpl">
+<div style="{{rootStyle}}">
+<header style="{{topStyle}}">
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+<button class="hb-card hb-lift" onClick="{{toggleNav}}" aria-label="Toggle side menu" style="width:40px; height:40px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:10px; border:1px solid #233036; background:#0d1f29; color:#b8c4cc; cursor:pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16"></path></svg>
+</button>
+</sc-if>
+<button onClick="{{goHome}}" aria-label="Housebets sports home" style="{{logoStyle}}">
+<span style="color:#00f5ff">H</span><span style="margin-left:-4px">ousebets</span>
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#00f5ff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M2 15c4-8 9-8 12-2s7 6 9-3c1-4 3-6 5-5"></path><path d="M5 20c3-3 6-3 9 0s6 3 9 0" stroke-opacity="0.45"></path></svg></sc-if>
+</button>
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+<button class="hb-card hb-lift" onClick="{{goSearch}}" style="flex:1; max-width:440px; margin-left:12px; display:flex; align-items:center; gap:10px; height:42px; padding:0 14px; border-radius:21px; border:1px solid #233036; background:#0d1f29; color:#8a96a4; font-family:Inter, sans-serif; font-size:14px; cursor:pointer; text-align:left">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<span style="flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Search teams, players, competitions, markets</span>
+</button>
+</sc-if>
+<div style="flex:1"></div>
+<div style="display:flex; align-items:center; gap:8px">
+<button onClick="{{openMyBets}}" aria-label="Balance {{balanceText}} USDT, open my bets" style="display:flex; align-items:center; gap:8px; height:44px; padding:0 12px 0 10px; border-radius:10px; border:0; background:#13242c; color:#ffffff; font-family:Inter, sans-serif; cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#26a17b"></circle><path d="M17.9 17.3v0c-.1 0-.7.1-1.9.1-1 0-1.7 0-1.9-.1v0c-3.7-.2-6.5-.8-6.5-1.6s2.8-1.4 6.5-1.6v2.5c.2 0 .9.1 1.9.1 1.2 0 1.8-.1 1.9-.1v-2.5c3.7.2 6.4.8 6.4 1.6s-2.7 1.4-6.4 1.6zm0-3.4v-2.2h5.2V8.3H8.9v3.4h5.2v2.2c-4.2.2-7.4 1-7.4 2s3.2 1.8 7.4 2v7.2h3.8V18c4.2-.2 7.3-1 7.3-2s-3.1-1.8-7.3-2z" fill="#ffffff"></path></svg>
+<span style="font-size:15px; font-weight:700; letter-spacing:-0.01em">${{balanceWhole}}<span style="font-size:12px; color:#b8c4cc">.{{balanceCents}}</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<button onClick="{{depositToast}}" style="height:44px; padding:0 {{walletPad}}; border:0; border-radius:10px; background:#c3f4f1; color:#0b1a21; font-family:Inter, sans-serif; font-size:15px; font-weight:700; cursor:pointer">Wallet</button>
+<sc-if value="{{showPrize}}" hint-placeholder-val="{{true}}">
+<div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px 0 10px; border-radius:10px; background:#13242c">
+<svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="hbCup" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a3"></stop><stop offset=".55" stop-color="#f8d466"></stop><stop offset="1" stop-color="#c9952a"></stop></linearGradient></defs><path d="M9 5h14v6a7 7 0 0 1-14 0z" fill="url(#hbCup)"></path><path d="M9 7H5v2a5 5 0 0 0 5 5M23 7h4v2a5 5 0 0 1-5 5" fill="none" stroke="#e0b44a" stroke-width="2"></path><path d="M14 18h4v5h-4z" fill="#d9a63a"></path><path d="M10 24h12v3H10z" rx="1" fill="#8a6418"></path></svg>
+<div style="display:flex; flex-direction:column; line-height:1.15; font-family:Inter, sans-serif">
+<span style="font-size:11px; color:#8a96a4">Monthly Prize</span>
+<span style="font-size:15px; font-weight:700; color:#f8d466">$100,000<span style="font-size:11px">.00</span></span>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+<button class="hb-card hb-lift" onClick="{{openMyBets}}" style="display:flex; align-items:center; gap:8px; height:42px; padding:0 14px; border-radius:10px; border:1px solid #233036; background:#0d1f29; color:#f2fbff; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4z"></path><path d="M10 7v12"></path></svg>
+My bets
+</button>
+</sc-if>
+</div>
+</header>
+<div style="flex:none; position:relative; z-index:2; display:flex; height:40px; background:#051016; border-bottom:1px solid #1a2b33; overflow:hidden">
+<button onClick="{{goLive}}" style="position:relative; overflow:hidden; z-index:2; flex:none; display:flex; align-items:center; gap:8px; height:40px; padding:0 22px 0 14px; border:0; background:#df1646; color:#ffffff; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:19px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; clip-path:polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%)">
+<span style="position:relative; width:8px; height:8px"><span style="position:absolute; inset:0; border-radius:50%; background:#ffffff; animation:hbPing 1.4s ease-out infinite"></span><span style="position:absolute; inset:0; border-radius:50%; background:#ffffff"></span></span>
+Live <span style="font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:800">{{cnt.all}}</span>
+</button>
+<div style="flex:1; min-width:0; overflow:hidden; position:relative">
+<sc-if value="{{hasTicker}}" hint-placeholder-val="{{true}}">
+<div style="{{tickerStyle}}">
+<sc-for list="{{ticker}}" as="k" hint-placeholder-count="8">
+<button onClick="{{k.open}}" style="flex:none; display:flex; align-items:center; gap:8px; height:40px; padding:0 16px; border:0; border-right:1px solid #1a2b33; background:transparent; color:#d6e1e8; font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap">
+<span style="width:6px; height:6px; border-radius:50%; background:{{k.hc}}"></span>
+<span>{{k.h}}</span>
+<span style="color:#c3f4f1; background:#0d2a33; padding:2px 6px; border-radius:4px">{{k.score}}</span>
+<span>{{k.a}}</span>
+<span style="width:6px; height:6px; border-radius:50%; background:{{k.ac}}"></span>
+<span style="color:#ff9db0">{{k.clock}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{tickerEmpty}}" hint-placeholder-val="{{false}}">
+<span style="display:flex; align-items:center; height:40px; padding:0 16px; font-family:'JetBrains Mono', monospace; font-size:12px; color:#8a96a4; white-space:nowrap">Nothing live · next kick-off {{nextKo}}</span>
+</sc-if>
+</div>
+</div>
+<div style="flex:1; display:flex; min-height:0; position:relative">
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+<nav aria-label="Sportsbook" style="{{navStyle}}">
+<button onClick="{{goHome}}" aria-label="Sports home" class="hb-nav" style="{{nv.home}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Sports home</span></sc-if>
+</button>
+<button onClick="{{goLive}}" aria-label="Live" class="hb-nav" style="{{nv.live}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Live</span><span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; color:#ff9db0; background:#2a1620; border-radius:5px; padding:2px 7px">{{cnt.all}}</span></sc-if>
+</button>
+<button onClick="{{goFootball}}" aria-label="Football" class="hb-nav" style="{{nv.footballTop}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m12 7.5 4 2.9-1.5 4.6h-5L8 10.4z"></path><path d="M12 3v4.5M21 10.5h-5M17.5 19.5 14.5 15M6.5 19.5 9.5 15M3 10.5h5"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Football</span></sc-if>
+</button>
+<button onClick="{{openSlipNav}}" aria-label="Bet slip and my bets" class="hb-nav" style="{{nv.plain}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4z"></path><path d="M10 7v12"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Bet slip &amp; my bets</span><sc-if value="{{slipHasItems}}" hint-placeholder-val="{{false}}"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; color:#0b1a21; background:#c3f4f1; border-radius:5px; padding:2px 7px">{{slip.count}}</span></sc-if></sc-if>
+</button>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}">
+<span style="{{navHead}}">Sports</span>
+</sc-if>
+<button onClick="{{goFootball}}" aria-label="Football" class="hb-nav" style="{{nv.football}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m12 7.5 4 2.9-1.5 4.6h-5L8 10.4z"></path><path d="M12 3v4.5M21 10.5h-5M17.5 19.5 14.5 15M6.5 19.5 9.5 15M3 10.5h5"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Football</span><span style="{{nb.football}}">{{cnt.football}}</span></sc-if>
+</button>
+<button onClick="{{goBasketball}}" aria-label="Basketball" class="hb-nav" style="{{nv.basketball}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Basketball</span><span style="{{nb.basketball}}">{{cnt.basketball}}</span></sc-if>
+</button>
+<button onClick="{{goTennis}}" aria-label="Tennis" class="hb-nav" style="{{nv.tennis}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6a9 9 0 0 1 0 12.8M18.4 5.6a9 9 0 0 0 0 12.8"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Tennis</span><span style="{{nb.tennis}}">{{cnt.tennis}}</span></sc-if>
+</button>
+<button onClick="{{goHockey}}" aria-label="Ice hockey" class="hb-nav" style="{{nv.icehockey}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l6 12h8a2 2 0 0 1 0 4H9.5L3 5"></path><ellipse cx="17" cy="9" rx="3" ry="1.5"></ellipse></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Ice hockey</span><span style="{{nb.icehockey}}">{{cnt.icehockey}}</span></sc-if>
+</button>
+<button onClick="{{goEsports}}" aria-label="Esports" class="hb-nav" style="{{nv.esports}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="5"></rect><path d="M7 10v4M5 12h4M15 11h.01M18 13h.01"></path></svg>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}"><span style="flex:1">Esports</span><span style="{{nb.esports}}">{{cnt.esports}}</span></sc-if>
+</button>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{true}}">
+<span style="{{navHead}}">Top competitions</span>
+<sc-for list="{{navComps}}" as="c" hint-placeholder-count="6">
+<button onClick="{{c.go}}" class="hb-nav" style="{{c.style}}">
+<span style="{{c.badge}}">{{c.ini}}</span><span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{c.name}}</span>
+</button>
+</sc-for>
+<span style="{{navHead}}">Following</span>
+<sc-for list="{{navFollow}}" as="f" hint-placeholder-count="2">
+<button onClick="{{f.go}}" style="display:flex; align-items:center; gap:10px; width:100%; min-height:40px; padding:0 12px; border:0; border-radius:8px; background:transparent; color:#d6e1e8; font-family:Inter, sans-serif; font-size:14px; font-weight:500; cursor:pointer; text-align:left">
+<span style="{{f.crest}}">{{f.code}}</span><span style="flex:1">{{f.name}}</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="#f8d466" stroke="#f8d466" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>
+</button>
+</sc-for>
+<sc-if value="{{noFollow}}" hint-placeholder-val="{{false}}">
+<span style="padding:4px 12px 0; font-size:13px; line-height:1.45; color:#8a96a4">Star a team or competition to pin it here.</span>
+</sc-if>
+</sc-if>
+</nav>
+</sc-if>
+<main id="content" ref="{{mainRef}}" style="flex:1; min-width:0; overflow-y:auto; overflow-x:hidden; background:transparent">
+<div style="{{pageWrap}}">
+<sc-if value="{{showCrumb}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; align-items:center; gap:8px; font-family:Inter, sans-serif; font-size:13px; color:#8a96a4; flex-wrap:wrap">
+<button onClick="{{goHome}}" style="border:0; background:transparent; padding:6px 0; color:#8a96a4; font-family:inherit; font-size:13px; cursor:pointer">Sports</button>
+<sc-for list="{{crumbs}}" as="c" hint-placeholder-count="2">
+<span aria-hidden="true" style="color:#56656f">›</span>
+<button onClick="{{c.go}}" class="hb-chip" style="{{c.style}}">{{c.name}}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{pHome}}" hint-placeholder-val="{{true}}">
+<div style="display:flex; flex-direction:column; gap:{{gapL}}; animation:hbIn .35s ease-out">
+<div style="position:relative">
+<label for="hb-search" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)">Search teams, players, competitions, markets</label>
+<div class="hb-card" style="display:flex; align-items:center; gap:10px; height:52px; padding:0 16px; border-radius:26px; border:1px solid {{searchBorder}}; background:#0d1f29; color:#8a96a4">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="hb-search" ref="{{searchRef}}" value="{{search}}" onChange="{{onSearch}}" placeholder="Search teams, players, competitions, markets" autocomplete="off" style="flex:1; min-width:0; height:48px; border:0; outline:none; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; font-size:16px">
+<sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+<button onClick="{{clearSearch}}" aria-label="Clear search" style="width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:0; border-radius:18px; background:#13242c; color:#b8c4cc; cursor:pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+</button>
+</sc-if>
+</div>
+<sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+<div class="hb-card" style="position:absolute; left:0; right:0; top:60px; z-index:20; background:#0d1f29; border:1px solid #233036; border-radius:14px; padding:8px; box-shadow:0 24px 60px rgba(0,0,0,.55); display:flex; flex-direction:column; gap:2px; max-height:440px; overflow-y:auto; animation:hbIn .2s ease-out">
+<sc-for list="{{results}}" as="g" hint-placeholder-count="2">
+<span style="padding:10px 10px 4px; font-family:Inter, sans-serif; font-size:13px; font-weight:700; color:#c3f4f1">{{g.title}}</span>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="2">
+<button onClick="{{it.go}}" style="display:flex; align-items:center; gap:12px; min-height:52px; padding:6px 10px; border:0; border-radius:10px; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; text-align:left; cursor:pointer">
+<span style="{{it.badge}}">{{it.ini}}</span>
+<span style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:0">
+<span style="font-size:15px; font-weight:700">{{it.title}}</span>
+<span style="font-size:12px; color:#8a96a4">{{it.sub}}</span>
+</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+</button>
+</sc-for>
+</sc-for>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+<div style="padding:20px 12px; display:flex; flex-direction:column; gap:6px">
+<span style="font-size:15px; font-weight:700">No results for “{{search}}”</span>
+<span style="font-size:13px; color:#8a96a4">Try a team like Arsenal, a player like Saka, a league, or a market like corners.</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<nav aria-label="Sports" style="{{sportStrip}}">
+<sc-for list="{{sportTiles}}" as="t" hint-placeholder-count="6">
+<button class="hb-sport" onClick="{{t.go}}" aria-label="{{t.aria}}" style="flex:none; width:{{stripItemW}}; display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0; border:0; background:transparent; color:#d6e1e8; cursor:pointer">
+<span class="hb-well" style="{{t.well}}">
+<sc-if value="{{t.isFootball}}" hint-placeholder-val="{{true}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m12 7.5 4 2.9-1.5 4.6h-5L8 10.4z"></path><path d="M12 3v4.5M21 10.5h-5M17.5 19.5 14.5 15M6.5 19.5 9.5 15M3 10.5h5"></path></svg></sc-if>
+<sc-if value="{{t.isBasketball}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"></path></svg></sc-if>
+<sc-if value="{{t.isTennis}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6a9 9 0 0 1 0 12.8M18.4 5.6a9 9 0 0 0 0 12.8"></path></svg></sc-if>
+<sc-if value="{{t.isHockey}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l6 12h8a2 2 0 0 1 0 4H9.5L3 5"></path><ellipse cx="17" cy="9" rx="3" ry="1.5"></ellipse></svg></sc-if>
+<sc-if value="{{t.isEsports}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="5"></rect><path d="M7 10v4M5 12h4M15 11h.01M18 13h.01"></path></svg></sc-if>
+<sc-if value="{{t.isLive}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg></sc-if>
+<sc-if value="{{t.hasBadge}}" hint-placeholder-val="{{true}}"><span style="position:absolute; top:-4px; right:-6px; min-width:20px; height:20px; padding:0 5px; box-sizing:border-box; border-radius:10px; border:2px solid #0b1a21; background:#df1646; color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center">{{t.badge}}</span></sc-if>
+</span>
+<span style="font-size:13px; font-weight:600; white-space:nowrap">{{t.name}}</span>
+</button>
+</sc-for>
+</nav>
+<sc-if value="{{hasFeatured}}" hint-placeholder-val="{{true}}">
+<section aria-label="Featured match" style="{{feat.boxStyle}}">
+<div aria-hidden="true" style="{{feat.split}}"></div>
+<div aria-hidden="true" style="position:absolute; inset:0; background-image:repeating-linear-gradient(-55deg, rgba(255,255,255,.035) 0 2px, transparent 2px 11px)"></div>
+<svg aria-hidden="true" viewBox="0 0 1200 160" preserveAspectRatio="none" fill="none" style="position:absolute; left:0; right:0; bottom:0; width:100%; height:46%; opacity:.9"><path d="M0 120 C 120 60, 220 60, 300 100 S 470 150, 560 92 S 700 20, 800 70 S 980 140, 1080 84 S 1180 50, 1200 60" stroke="#00f5ff" stroke-opacity=".12" stroke-width="2"></path><path d="M0 140 C 140 92, 240 96, 330 124 S 500 160, 600 118 S 740 62, 840 100 S 1010 156, 1110 112 S 1190 92, 1200 96" stroke="#c3f4f1" stroke-opacity=".06" stroke-width="2"></path><path d="M0 160 C 150 120, 260 126, 360 146 S 530 168, 640 140 S 780 100, 880 128 S 1040 166, 1140 138 L 1200 132 L 1200 160 Z" fill="#00f5ff" fill-opacity=".025"></path></svg>
+<div aria-hidden="true" style="position:absolute; inset:0; opacity:.7; background-image:radial-gradient(circle, transparent 58px, rgba(255,255,255,.06) 59px, rgba(255,255,255,.06) 60px, transparent 61px), linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.06) calc(50% - 1px), rgba(255,255,255,.06) calc(50% + 1px), transparent calc(50% + 1px))"></div>
+<div style="position:relative; display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; letter-spacing:.12em; color:#0b1a21; background:#c3f4f1; padding:4px 12px 4px 8px; clip-path:polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%)">FEATURED</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#d6e1e8">{{feat.comp}}</span>
+<span style="flex:1"></span>
+<span style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; color:#ffd0d9; background:rgba(255,107,132,.18); border:1px solid rgba(255,107,132,.45); padding:3px 9px; border-radius:20px">
+<span style="position:relative; width:6px; height:6px"><span style="position:absolute; inset:0; border-radius:50%; background:#ff6b84; animation:hbPing 1.4s ease-out infinite"></span><span style="position:absolute; inset:0; border-radius:50%; background:#ff6b84"></span></span>
+{{feat.clock}} · {{feat.period}}
+</span>
+</div>
+<button onClick="{{feat.open}}" style="position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:{{feat.gap}}; border:0; padding:4px 0; background:transparent; color:#f2fbff; cursor:pointer; text-align:left">
+<span style="{{featSideL}}">
+<span style="{{feat.h.crestL}}">{{feat.h.code}}</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{featName}}; font-weight:900; text-transform:uppercase; line-height:.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{feat.h.name}}</span>
+</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{featScore}}; font-weight:900; line-height:.85; letter-spacing:-0.02em">{{feat.h.score}}<span style="color:#c3f4f1; padding:0 6px">:</span>{{feat.a.score}}</span>
+<span style="{{featSideR}}">
+<span style="{{feat.a.crestL}}">{{feat.a.code}}</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{featName}}; font-weight:900; text-transform:uppercase; line-height:.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%">{{feat.a.name}}</span>
+</span>
+</button>
+<div style="{{feat.mGrid}}">
+<sc-for list="{{feat.markets}}" as="fm" hint-placeholder-count="2">
+<div style="display:flex; flex-direction:column; gap:8px; min-width:0">
+<span style="font-family:Inter, sans-serif; font-size:13px; color:#b8c4cc">{{fm.name}}</span>
+<div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px">
+<sc-for list="{{fm.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<button onClick="{{feat.open}}" style="position:relative; align-self:flex-start; display:flex; align-items:center; gap:8px; min-height:40px; padding:0; border:0; background:transparent; color:#c3f4f1; font-family:Inter, sans-serif; font-size:12px; font-weight:800; cursor:pointer">All {{feat.more}} markets
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+</button>
+</section>
+</sc-if>
+<sc-if value="{{hasFavs}}" hint-placeholder-val="{{true}}">
+<section style="display:flex; flex-direction:column; gap:14px">
+<div style="{{secHead}}">
+<h2 style="{{secTitle}}">Your teams</h2>
+</div>
+<div style="display:flex; gap:8px; flex-wrap:wrap">
+<sc-for list="{{favs}}" as="f" hint-placeholder-count="2">
+<div class="hb-card" style="display:flex; align-items:center; gap:4px; padding:4px 4px 4px 6px; border-radius:12px; border:1px solid #233036; background:#0d1f29">
+<button onClick="{{f.go}}" style="display:flex; align-items:center; gap:10px; min-height:44px; padding:0 8px; border:0; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; cursor:pointer; text-align:left">
+<span style="{{f.crest}}">{{f.code}}</span>
+<span style="display:flex; flex-direction:column; gap:1px">
+<span style="font-size:15px; font-weight:700">{{f.name}}</span>
+<span style="font-size:12px; color:{{f.nextColor}}">{{f.next}}</span>
+</span>
+</button>
+<button onClick="{{f.remove}}" aria-label="{{f.removeLabel}}" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:transparent; color:#f8d466; cursor:pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="#f8d466" stroke="#f8d466" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>
+</button>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+<section style="display:flex; flex-direction:column; gap:14px">
+<div style="{{secHead}}">
+<h2 style="{{secTitle}}">Live now</h2>
+<span style="flex:1"></span>
+<button onClick="{{goLive}}" style="{{secLink}}">See all live</button>
+</div>
+<sc-if value="{{hasLive}}" hint-placeholder-val="{{true}}">
+<div style="{{liveGrid}}">
+<sc-for list="{{liveCards}}" as="c" hint-placeholder-count="4">
+<div class="hb-card" style="position:relative; display:flex; flex-direction:column; background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; overflow:hidden">
+<div aria-hidden="true" style="{{c.glow}}"></div>
+<div aria-hidden="true" style="position:relative; display:grid; grid-template-columns:1fr 1fr; height:3px"><span style="background:{{c.hc}}"></span><span style="background:{{c.ac}}"></span></div>
+<div style="position:relative; padding:14px 16px 12px; display:flex; flex-direction:column; gap:12px">
+<div style="display:flex; align-items:center; gap:8px; min-width:0">
+<span style="flex:1; font-family:Inter, sans-serif; font-size:13px; color:#b8c4cc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{c.comp}}</span>
+<span style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:800; color:#ff9db0"><span style="width:6px; height:6px; border-radius:50%; background:#ff6b84"></span>{{c.clock}}</span>
+</div>
+<button onClick="{{c.open}}" style="display:flex; flex-direction:column; gap:6px; border:0; padding:0; background:transparent; color:#f2fbff; cursor:pointer; text-align:left">
+<span style="display:flex; align-items:center; gap:10px; width:100%"><span style="{{c.h.crest}}">{{c.h.code}}</span><span style="flex:1; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:23px; font-weight:900; text-transform:uppercase; line-height:1.05; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{c.h.name}}</span><span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:30px; font-weight:900; line-height:1">{{c.h.score}}</span></span>
+<span style="display:flex; align-items:center; gap:10px; width:100%"><span style="{{c.a.crest}}">{{c.a.code}}</span><span style="flex:1; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:23px; font-weight:900; text-transform:uppercase; line-height:1.05; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{c.a.name}}</span><span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:30px; font-weight:900; line-height:1">{{c.a.score}}</span></span>
+</button>
+<sc-if value="{{c.locked}}" hint-placeholder-val="{{false}}"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended · goal check</div></sc-if>
+<div style="{{c.gridStyle}}">
+<sc-for list="{{c.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+<div style="display:flex; align-items:center; justify-content:space-between; font-family:Inter, sans-serif; font-size:13px; color:#8a96a4">
+<span>{{c.mName}}</span>
+<button onClick="{{c.open}}" style="min-height:32px; border:0; padding:0; background:transparent; color:#b8c4cc; font-family:inherit; font-size:11px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer">{{c.more}} markets</button>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noLive}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; align-items:center; gap:14px; padding:20px; border-radius:6px; border:1px dashed #233036; background:#0d1f29">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span style="display:flex; flex-direction:column; gap:3px"><span style="font-size:16px; font-weight:700">Nothing live right now</span><span style="font-size:13px; color:#8a96a4">First kick-off {{nextKo}}. Starting soon is below.</span></span>
+</div>
+</sc-if>
+</section>
+<section style="display:flex; flex-direction:column; gap:14px">
+<div style="{{secHead}}">
+<h2 style="{{secTitle}}">Starting soon</h2>
+<span style="flex:1"></span>
+<button onClick="{{goFootball}}" style="{{secLink}}">All football</button>
+</div>
+<div class="hb-card" style="background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; overflow:hidden">
+<sc-for list="{{soonRows}}" as="r" hint-placeholder-count="4">
+<div style="{{L.rowStyle}}">
+<div style="display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono', monospace; font-size:12px">
+<sc-if value="{{r.live}}" hint-placeholder-val="{{false}}"><span style="{{L.livePill}}">LIVE</span></sc-if>
+<span style="{{r.t1Style}}">{{r.t1}}</span><span style="font-family:Inter, sans-serif; color:#8a96a4; font-size:12px">{{r.t2}}</span>
+</div>
+<button onClick="{{r.open}}" style="display:flex; flex-direction:column; gap:5px; min-width:0; border:0; padding:4px 0; background:transparent; color:#f2fbff; text-align:left; cursor:pointer">
+<span style="font-family:Inter, sans-serif; font-size:12px; color:#8a96a4">{{r.compLine}}</span>
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.h.crest}}">{{r.h.code}}</span><span style="{{L.teamName}}">{{r.h.name}}</span><span style="{{L.score}}">{{r.h.score}}</span></span>
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.a.crest}}">{{r.a.code}}</span><span style="{{L.teamName}}">{{r.a.name}}</span><span style="{{L.score}}">{{r.a.score}}</span></span>
+</button>
+<div style="{{L.oddsBox}}">
+<sc-if value="{{r.locked}}" hint-placeholder-val="{{false}}"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended</div></sc-if>
+<div style="{{r.gridStyle}}">
+<sc-for list="{{r.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<button onClick="{{r.open}}" aria-label="{{r.moreLabel}}" style="{{L.moreStyle}}">{{r.more}}</button>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="display:flex; flex-direction:column; gap:14px">
+<div style="{{secHead}}">
+<h2 style="{{secTitle}}">Top competitions</h2>
+</div>
+<div style="{{compGrid}}">
+<sc-for list="{{compTiles}}" as="c" hint-placeholder-count="8">
+<button class="hb-card hb-lift" onClick="{{c.go}}" style="position:relative; overflow:hidden; display:flex; align-items:center; gap:12px; min-height:72px; padding:12px 14px; border-radius:6px; border:1px solid #1c2e37; background:#0d1f29; color:#f2fbff; text-align:left; cursor:pointer">
+<span aria-hidden="true" style="{{c.glow}}"></span>
+<span style="{{c.badge}}">{{c.ini}}</span>
+<span style="position:relative; display:flex; flex-direction:column; gap:3px; min-width:0">
+<span style="font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{c.name}}</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; color:{{c.subColor}}">{{c.sub}}</span>
+</span>
+</button>
+</sc-for>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{pLive}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; gap:18px; animation:hbIn .35s ease-out">
+<div style="{{secHead}}">
+<h1 style="{{pageTitle}}">Live</h1>
+</div>
+<div role="tablist" aria-label="Filter by sport" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:2px">
+<sc-for list="{{sportChips}}" as="c" hint-placeholder-count="5">
+<button role="tab" aria-selected="{{c.active}}" onClick="{{c.go}}" class="hb-chip" style="{{c.style}}">{{c.name}} <span style="{{c.countStyle}}">{{c.count}}</span></button>
+</sc-for>
+</div>
+<sc-if value="{{hasCompChips}}" hint-placeholder-val="{{false}}">
+<div aria-label="Filter by competition" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:2px">
+<sc-for list="{{compChips}}" as="c" hint-placeholder-count="3">
+<button aria-pressed="{{c.active}}" onClick="{{c.go}}" class="hb-chip" style="{{c.style}}">{{c.name}}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-for list="{{liveGroups}}" as="g" hint-placeholder-count="2">
+<section class="hb-card" style="background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; overflow:hidden">
+<div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#10232d; border-bottom:1px solid #1a2b33">
+<span style="{{g.badge}}">{{g.ini}}</span>
+<span style="flex:1; display:flex; flex-direction:column; gap:2px"><span style="font-size:15px; font-weight:700">{{g.name}}</span><span style="font-family:Inter, sans-serif; font-size:12px; color:#8a96a4">{{g.country}}</span></span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; color:#ff9db0; background:#2a1620; padding:3px 8px; border-radius:4px">{{g.count}} live</span>
+</div>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+<div style="{{L.rowStyle}}">
+<div style="display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono', monospace; font-size:12px">
+<sc-if value="{{r.live}}" hint-placeholder-val="{{false}}"><span style="{{L.livePill}}">LIVE</span></sc-if>
+<span style="{{r.t1Style}}">{{r.t1}}</span><span style="font-family:Inter, sans-serif; color:#8a96a4; font-size:12px">{{r.t2}}</span>
+</div>
+<button onClick="{{r.open}}" style="display:flex; flex-direction:column; gap:5px; min-width:0; border:0; padding:4px 0; background:transparent; color:#f2fbff; text-align:left; cursor:pointer">
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.h.crest}}">{{r.h.code}}</span><span style="{{L.teamName}}">{{r.h.name}}</span><span style="{{L.score}}">{{r.h.score}}</span></span>
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.a.crest}}">{{r.a.code}}</span><span style="{{L.teamName}}">{{r.a.name}}</span><span style="{{L.score}}">{{r.a.score}}</span></span>
+</button>
+<div style="{{L.oddsBox}}">
+<sc-if value="{{r.locked}}" hint-placeholder-val="{{false}}"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended</div></sc-if>
+<div style="{{r.gridStyle}}">
+<sc-for list="{{r.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<button onClick="{{r.open}}" aria-label="{{r.moreLabel}}" style="{{L.moreStyle}}">{{r.more}}</button>
+</div>
+</sc-for>
+</section>
+</sc-for>
+<sc-if value="{{liveEmpty}}" hint-placeholder-val="{{false}}">
+<div style="position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:44px 20px; border-radius:6px; border:1px dashed #233036; background:#0d1f29">
+<div aria-hidden="true" style="position:absolute; inset:0; background-image:repeating-linear-gradient(-55deg, rgba(255,255,255,.025) 0 2px, transparent 2px 11px)"></div>
+<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" style="position:relative"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path><path d="M3 3l18 18"></path></svg>
+<span style="position:relative; font-size:20px; font-weight:700">{{emptyTitle}}</span>
+<span style="position:relative; font-size:14px; color:#b8c4cc; max-width:360px; line-height:1.45">{{emptySub}}</span>
+</div>
+<div style="{{secHead}}">
+<h2 style="{{secTitle}}">Starting soon</h2>
+</div>
+<div class="hb-card" style="background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; overflow:hidden">
+<sc-for list="{{emptySoon}}" as="r" hint-placeholder-count="4">
+<div style="{{L.rowStyle}}">
+<div style="display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono', monospace; font-size:12px">
+<sc-if value="{{r.live}}" hint-placeholder-val="{{false}}"><span style="{{L.livePill}}">LIVE</span></sc-if>
+<span style="{{r.t1Style}}">{{r.t1}}</span><span style="font-family:Inter, sans-serif; color:#8a96a4; font-size:12px">{{r.t2}}</span>
+</div>
+<button onClick="{{r.open}}" style="display:flex; flex-direction:column; gap:5px; min-width:0; border:0; padding:4px 0; background:transparent; color:#f2fbff; text-align:left; cursor:pointer">
+<span style="font-family:Inter, sans-serif; font-size:12px; color:#8a96a4">{{r.compLine}}</span>
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.h.crest}}">{{r.h.code}}</span><span style="{{L.teamName}}">{{r.h.name}}</span></span>
+<span style="display:flex; align-items:center; gap:8px; width:100%; min-width:0"><span style="{{r.a.crest}}">{{r.a.code}}</span><span style="{{L.teamName}}">{{r.a.name}}</span></span>
+</button>
+<div style="{{L.oddsBox}}">
+<sc-if value="{{r.locked}}" hint-placeholder-val="{{false}}"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended</div></sc-if>
+<div style="{{r.gridStyle}}">
+<sc-for list="{{r.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<button onClick="{{r.open}}" aria-label="{{r.moreLabel}}" style="{{L.moreStyle}}">{{r.more}}</button>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{pFootball}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; gap:18px; animation:hbIn .35s ease-out">
+<div style="{{secHead}}">
+<h1 style="{{pageTitle}}">Football</h1>
+</div>
+<div role="tablist" aria-label="Competitions" style="display:flex; gap:0; overflow-x:auto; border-bottom:1px solid #1a2b33">
+<sc-for list="{{fbTabs}}" as="c" hint-placeholder-count="5">
+<button role="tab" aria-selected="{{c.active}}" onClick="{{c.go}}" style="{{c.style}}"><span style="{{c.badge}}">{{c.ini}}</span>{{c.name}}</button>
+</sc-for>
+</div>
+<div style="{{fb.box}}">
+<div aria-hidden="true" style="{{fb.glow}}"></div>
+<div aria-hidden="true" style="position:absolute; inset:0; background-image:repeating-linear-gradient(-55deg, rgba(255,255,255,.03) 0 2px, transparent 2px 11px)"></div>
+<span style="{{fb.badgeL}}">{{fb.ini}}</span>
+<span style="position:relative; flex:1; min-width:160px; display:flex; flex-direction:column; gap:4px">
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{fbName}}; font-weight:900; text-transform:uppercase; line-height:.95">{{fb.name}}</span>
+<span style="font-family:Inter, sans-serif; font-size:13px; color:#b8c4cc">{{fb.country}} · {{fb.count}} matches · <span style="color:#ff9db0">{{fb.liveCount}} live</span></span>
+</span>
+<button onClick="{{fb.follow}}" aria-pressed="{{fb.followed}}" style="{{fb.followStyle}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="{{fb.starFill}}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>
+{{fb.followText}}
+</button>
+</div>
+<sc-for list="{{fbSections}}" as="g" hint-placeholder-count="2">
+<section class="hb-card" style="background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; overflow:hidden">
+<div style="{{L.headRow}}">
+<span style="display:flex; align-items:center; gap:8px; font-family:Inter, sans-serif; font-size:13px; font-weight:800; color:{{g.color}}"><span style="width:6px; height:6px; border-radius:50%; background:{{g.color}}"></span>{{g.title}}</span>
+<sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+<span></span>
+<span style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.12em; color:#8a96a4; text-align:center"><span>HOME</span><span>DRAW</span><span>AWAY</span></span>
+<span></span>
+</sc-if>
+</div>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<div style="{{L.rowStyle}}">
+<div style="display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono', monospace; font-size:12px">
+<sc-if value="{{r.live}}" hint-placeholder-val="{{false}}"><span style="{{L.livePill}}">LIVE</span></sc-if>
+<span style="{{r.t1Style}}">{{r.t1}}</span><span style="font-family:Inter, sans-serif; color:#8a96a4; font-size:12px">{{r.t2}}</span>
+</div>
+<div style="display:flex; flex-direction:column; gap:2px; min-width:0">
+<div style="display:flex; align-items:center; gap:6px; min-width:0">
+<button onClick="{{r.h.follow}}" aria-pressed="{{r.h.followed}}" aria-label="{{r.h.starLabel}}" style="width:32px; height:32px; flex:none; display:flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:transparent; color:{{r.h.starColor}}; cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="{{r.h.starFill}}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg></button>
+<span style="{{r.h.crest}}">{{r.h.code}}</span>
+<button onClick="{{r.open}}" style="flex:1; min-width:0; border:0; padding:4px 0; background:transparent; color:#f2fbff; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:20px; font-weight:900; text-transform:uppercase; line-height:1; text-align:left; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{r.h.name}}</button>
+<span style="{{L.score}}">{{r.h.score}}</span>
+</div>
+<div style="display:flex; align-items:center; gap:6px; min-width:0">
+<button onClick="{{r.a.follow}}" aria-pressed="{{r.a.followed}}" aria-label="{{r.a.starLabel}}" style="width:32px; height:32px; flex:none; display:flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:transparent; color:{{r.a.starColor}}; cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="{{r.a.starFill}}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg></button>
+<span style="{{r.a.crest}}">{{r.a.code}}</span>
+<button onClick="{{r.open}}" style="flex:1; min-width:0; border:0; padding:4px 0; background:transparent; color:#f2fbff; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:20px; font-weight:900; text-transform:uppercase; line-height:1; text-align:left; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{r.a.name}}</button>
+<span style="{{L.score}}">{{r.a.score}}</span>
+</div>
+</div>
+<div style="{{L.oddsBox}}">
+<sc-if value="{{r.locked}}" hint-placeholder-val="{{false}}"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended</div></sc-if>
+<div style="{{r.gridStyle}}">
+<sc-for list="{{r.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<button onClick="{{r.open}}" aria-label="{{r.moreLabel}}" style="{{L.moreStyle}}">{{r.more}}</button>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{pMatch}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; gap:18px; animation:hbIn .35s ease-out">
+<section aria-label="Scoreboard" style="{{mt.boxStyle}}">
+<div aria-hidden="true" style="{{mt.split}}"></div>
+<div aria-hidden="true" style="position:absolute; inset:0; background-image:repeating-linear-gradient(-55deg, rgba(255,255,255,.035) 0 2px, transparent 2px 11px)"></div>
+<div aria-hidden="true" style="position:absolute; inset:0; opacity:.7; background-image:radial-gradient(circle, transparent 62px, rgba(255,255,255,.06) 63px, rgba(255,255,255,.06) 64px, transparent 65px), linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.06) calc(50% - 1px), rgba(255,255,255,.06) calc(50% + 1px), transparent calc(50% + 1px))"></div>
+<div style="position:relative; display:flex; align-items:center; gap:10px">
+<span style="{{mt.compBadge}}">{{mt.compIni}}</span>
+<span style="flex:1; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#d6e1e8">{{mt.comp}}</span>
+<sc-if value="{{mt.live}}" hint-placeholder-val="{{true}}">
+<span style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:800; letter-spacing:.08em; color:#ffd0d9; background:rgba(255,107,132,.18); border:1px solid rgba(255,107,132,.45); padding:3px 9px; border-radius:20px">
+<span style="position:relative; width:6px; height:6px"><span style="position:absolute; inset:0; border-radius:50%; background:#ff6b84; animation:hbPing 1.4s ease-out infinite"></span><span style="position:absolute; inset:0; border-radius:50%; background:#ff6b84"></span></span>LIVE
+</span>
+</sc-if>
+</div>
+<div style="position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:{{sbGap}}">
+<div style="display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; text-align:center">
+<span style="{{mt.h.crestXL}}">{{mt.h.code}}</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{sbName}}; font-weight:900; text-transform:uppercase; line-height:.95">{{mt.h.name}}</span>
+<button onClick="{{mt.h.follow}}" aria-pressed="{{mt.h.followed}}" style="{{mt.h.followBtn}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="{{mt.h.starFill}}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>{{mt.h.followText}}</button>
+</div>
+<div style="display:flex; flex-direction:column; align-items:center; gap:10px">
+<sc-if value="{{mt.live}}" hint-placeholder-val="{{true}}">
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{sbScore}}; font-weight:900; letter-spacing:-0.02em; line-height:.82">{{mt.h.score}}<span style="color:#c3f4f1; padding:0 4px">:</span>{{mt.a.score}}</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:15px; font-weight:800; color:#1a0509; background:#ff6b84; padding:4px 16px; clip-path:polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)">{{mt.clock}}</span>
+<span style="font-family:Inter, sans-serif; font-size:13px; color:#d6e1e8">{{mt.period}}</span>
+</sc-if>
+<sc-if value="{{mt.notLive}}" hint-placeholder-val="{{false}}">
+<span style="font-family:Inter, sans-serif; font-size:13px; color:#b8c4cc">Kick-off</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{sbKo}}; font-weight:900; line-height:.9">{{mt.koTime}}</span>
+<span style="font-family:Inter, sans-serif; font-size:13px; color:#b8c4cc">{{mt.koDay}}</span>
+</sc-if>
+</div>
+<div style="display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; text-align:center">
+<span style="{{mt.a.crestXL}}">{{mt.a.code}}</span>
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:{{sbName}}; font-weight:900; text-transform:uppercase; line-height:.95">{{mt.a.name}}</span>
+<button onClick="{{mt.a.follow}}" aria-pressed="{{mt.a.followed}}" style="{{mt.a.followBtn}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="{{mt.a.starFill}}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>{{mt.a.followText}}</button>
+</div>
+</div>
+<sc-if value="{{mt.hasEvents}}" hint-placeholder-val="{{true}}">
+<div style="position:relative; display:flex; justify-content:center; gap:6px; flex-wrap:wrap">
+<sc-for list="{{mt.events}}" as="e" hint-placeholder-count="2">
+<span style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace; font-size:11px; color:#d6e1e8; background:rgba(5,16,22,.65); border:1px solid rgba(255,255,255,.08); padding:5px 10px; border-radius:4px">
+<span style="{{e.dot}}"></span><span style="font-weight:800; color:#ffffff">{{e.min}}</span>{{e.text}}
+</span>
+</sc-for>
+</div>
+</sc-if>
+</section>
+<div role="tablist" aria-label="Market groups" style="display:flex; overflow-x:auto; position:sticky; top:0; z-index:5; background:#0b1a21; border-bottom:1px solid #1a2b33">
+<sc-for list="{{mt.tabs}}" as="t" hint-placeholder-count="6">
+<button role="tab" aria-selected="{{t.active}}" onClick="{{t.go}}" class="hb-nav" style="{{t.style}}">{{t.name}} <span style="{{t.countStyle}}">{{t.count}}</span></button>
+</sc-for>
+</div>
+<sc-for list="{{mt.markets}}" as="mk" hint-placeholder-count="4">
+<section class="hb-card" style="background:#0d1f29; border:1px solid {{mk.border}}; border-radius:6px; overflow:hidden; transition:border-color .3s">
+<button onClick="{{mk.toggle}}" aria-expanded="{{mk.open}}" style="width:100%; display:flex; align-items:center; gap:10px; min-height:56px; padding:0 16px; border:0; background:transparent; color:#f2fbff; text-align:left; cursor:pointer">
+<span style="flex:1; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:22px; font-weight:900; text-transform:uppercase; line-height:1">{{mk.name}}</span>
+<sc-if value="{{mk.locked}}" hint-placeholder-val="{{false}}">
+<span style="display:flex; align-items:center; gap:6px; font-family:Inter, sans-serif; font-size:13px; font-weight:800; color:#f8d466; background:#2a2612; padding:4px 10px; border-radius:4px">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>{{mk.lockReason}}
+</span>
+</sc-if>
+<sc-if value="{{mk.inSlipBadge}}" hint-placeholder-val="{{false}}">
+<span style="font-size:12px; font-weight:700; color:#0b1a21; background:#c3f4f1; padding:3px 9px; border-radius:6px">In slip</span>
+</sc-if>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="{{mk.chev}}"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{mk.open}}" hint-placeholder-val="{{true}}">
+<sc-if value="{{mk.locked}}" hint-placeholder-val="{{false}}"><div style="padding:0 16px 16px"><div style="{{L.suspBar}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended · reopens shortly</div></div></sc-if>
+<sc-if value="{{mk.showLine}}" hint-placeholder-val="{{false}}">
+<div style="{{mk.lineGrid}}">
+<span style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.14em; color:#8a96a4">LINE</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.14em; color:#8a96a4; text-align:center">OVER</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.14em; color:#8a96a4; text-align:center">UNDER</span>
+<sc-for list="{{mk.rows}}" as="rw" hint-placeholder-count="3">
+<span style="font-family:'JetBrains Mono', monospace; font-size:16px; font-weight:700; color:#f2fbff; padding-left:4px">{{rw.line}}</span>
+<button class="hb-odd" onClick="{{rw.over.toggle}}" disabled="{{rw.over.locked}}" aria-pressed="{{rw.over.inSlip}}" aria-label="{{rw.over.aria}}" style="{{rw.over.style}}"><span style="{{rw.over.oddsStyle}}">{{rw.over.arrow}}{{rw.over.odds}}</span></button>
+<button class="hb-odd" onClick="{{rw.under.toggle}}" disabled="{{rw.under.locked}}" aria-pressed="{{rw.under.inSlip}}" aria-label="{{rw.under.aria}}" style="{{rw.under.style}}"><span style="{{rw.under.oddsStyle}}">{{rw.under.arrow}}{{rw.under.odds}}</span></button>
+</sc-for>
+</div>
+</sc-if>
+<div style="{{mk.gridStyle}}">
+<sc-for list="{{mk.sels}}" as="o" hint-placeholder-count="3">
+<button class="hb-odd" onClick="{{o.toggle}}" disabled="{{o.locked}}" aria-pressed="{{o.inSlip}}" aria-label="{{o.aria}}" style="{{o.style}}">
+<span style="{{o.labelStyle}}">{{o.label}}</span>
+<sc-if value="{{o.locked}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>
+<sc-if value="{{o.unlocked}}" hint-placeholder-val="{{true}}"><span style="{{o.oddsStyle}}">{{o.arrow}}{{o.odds}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</sc-if>
+</section>
+</sc-for>
+<sc-if value="{{mt.tabEmpty}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:40px 20px; border-radius:6px; border:1px dashed #233036; background:#0d1f29">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8a96a4" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span style="font-size:17px; font-weight:700">{{mt.emptyTitle}}</span>
+<span style="font-size:14px; color:#b8c4cc">{{mt.emptySub}}</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<footer style="margin-top:12px; padding:24px 0 8px; border-top:1px solid #1a2b33; display:flex; flex-direction:column; gap:10px; font-size:12px; color:#8a96a4; line-height:1.5">
+<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+<span style="font-family:Inter, sans-serif; font-size:17px; font-weight:800; letter-spacing:-0.03em; color:#f2fbff"><span style="color:#00f5ff">H</span>ousebets</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.12em; border:1px solid #233036; border-radius:4px; padding:3px 8px; font-weight:700">Prototype</span>
+<span style="border:1px solid #233036; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-weight:800">18+</span>
+</div>
+<span>Sample data only. No real players and no real money. Odds move on a simulated feed. Singles only, decimal odds. Gamble responsibly.</span>
+</footer>
+</div>
+</main>
+<aside aria-label="Bet slip and my bets" style="{{slipWrap}}">
+<sc-if value="{{isMobile}}" hint-placeholder-val="{{false}}">
+<button onClick="{{closeSheet}}" aria-label="Close bet slip" style="flex:1; min-height:40px; border:0; background:transparent; cursor:pointer"></button>
+</sc-if>
+<div style="{{slipPanel}}">
+<sc-if value="{{isMobile}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; justify-content:center; padding:8px 0 0"><span style="width:44px; height:5px; border-radius:4px; background:#233036"></span></div>
+</sc-if>
+<div style="flex:none; display:flex; align-items:stretch; border-bottom:1px solid #1a2b33">
+<div role="tablist" aria-label="Bet slip or my bets" style="flex:1; display:grid; grid-template-columns:1fr 1fr">
+<button role="tab" aria-selected="{{tabSlip}}" onClick="{{showSlipTab}}" style="{{slipTabStyle}}">Bet slip <span style="{{slipCountStyle}}">{{slip.count}}</span></button>
+<button role="tab" aria-selected="{{tabBets}}" onClick="{{showBetsTab}}" style="{{betsTabStyle}}">My bets <span style="{{betsCountStyle}}">{{mb.openCount}}</span></button>
+</div>
+<sc-if value="{{isMobile}}" hint-placeholder-val="{{false}}">
+<button onClick="{{closeSheet}}" aria-label="Close" style="width:52px; flex:none; display:flex; align-items:center; justify-content:center; border:0; border-left:1px solid #1a2b33; background:transparent; color:#b8c4cc; cursor:pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+</button>
+</sc-if>
+</div>
+<sc-if value="{{tabSlip}}" hint-placeholder-val="{{true}}">
+<div style="flex:1; min-height:0; overflow-y:auto; padding:14px; display:grid; align-content:start; grid-template-columns:minmax(0,1fr); grid-auto-rows:max-content; gap:12px">
+<sc-if value="{{slip.empty}}" hint-placeholder-val="{{true}}">
+<div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:28px 8px 10px; align-items:flex-start; text-align:left">
+<span style="font-size:17px; font-weight:700">Your bet slip is empty</span>
+<span style="font-size:14px; color:#b8c4cc; line-height:1.5">Tap any price to add it. Each selection is placed as its own single bet.</span>
+</div>
+<span style="display:flex; align-items:center; gap:8px; font-family:Inter, sans-serif; font-size:13px; font-weight:700; color:#c3f4f1">Popular right now</span>
+<sc-for list="{{slip.picks}}" as="p" hint-placeholder-count="3">
+<button class="hb-card hb-lift" onClick="{{p.add}}" disabled="{{p.locked}}" style="display:flex; align-items:center; gap:10px; min-height:58px; padding:8px 12px; border-radius:6px; border:1px solid #233036; background:#0d1f29; color:#f2fbff; text-align:left; cursor:pointer">
+<span style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0">
+<span style="font-family:Inter, sans-serif; font-size:14px; font-weight:700">{{p.label}}</span>
+<span style="font-size:12px; color:#8a96a4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{p.sub}}</span>
+</span>
+<span style="font-family:Inter, sans-serif; font-size:15px; font-weight:800; color:#0b1a21; background:#c3f4f1; padding:6px 10px; border-radius:4px">{{p.odds}}</span>
+</button>
+</sc-for>
+</sc-if>
+<sc-if value="{{slip.isPlaced}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:18px 8px 6px">
+<span style="width:64px; height:64px; border-radius:50%; background:#0f3b2b; color:#6ee7a0; display:flex; align-items:center; justify-content:center; animation:hbPop .5s ease-out">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+</span>
+<span style="font-size:20px; font-weight:800">{{slip.placedTitle}}</span>
+<span style="font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc">{{slip.placedSub}}</span>
+</div>
+<sc-for list="{{slip.receipt}}" as="b" hint-placeholder-count="2">
+<div class="hb-card" style="position:relative; display:flex; flex-direction:column; gap:8px; padding:14px; background:#0d1f29; border:1px solid #1c2e37; border-radius:6px; animation:hbIn .35s ease-out">
+<div style="display:flex; align-items:baseline; gap:8px">
+<span style="flex:1; font-size:16px; font-weight:700">{{b.label}}</span>
+<span style="font-family:Inter, sans-serif; font-size:15px; font-weight:800">{{b.oddsText}}</span>
+</div>
+<span style="font-size:12px; color:#b8c4cc">{{b.market}} · {{b.matchName}}</span>
+<div style="position:relative; margin:4px -14px; border-top:1px dashed #2d4250">
+<span aria-hidden="true" style="position:absolute; left:-8px; top:-8px; width:16px; height:16px; border-radius:50%; background:#0b1a21; border:1px solid #1c2e37"></span>
+<span aria-hidden="true" style="position:absolute; right:-8px; top:-8px; width:16px; height:16px; border-radius:50%; background:#0b1a21; border:1px solid #1c2e37"></span>
+</div>
+<div style="display:flex; justify-content:space-between; font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc"><span>Stake {{b.stakeText}}</span><span>Returns <b style="color:#c3f4f1">{{b.retText}}</b></span></div>
+<span style="font-family:Inter, sans-serif; font-size:10px; letter-spacing:.06em; color:#8a96a4">{{b.id}} · {{b.placed}}</span>
+</div>
+</sc-for>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+<button class="hb-card hb-lift" onClick="{{reuse}}" style="min-height:48px; border-radius:6px; border:1px solid #233036; background:#0d1f29; color:#f2fbff; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:pointer">Reuse selections</button>
+<button class="hb-card hb-lift" onClick="{{viewBets}}" style="min-height:48px; border-radius:6px; border:1px solid #233036; background:#0d1f29; color:#f2fbff; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:pointer">View in My bets</button>
+</div>
+<button class="hb-cta hb-gloss" onClick="{{done}}" style="min-height:56px; border:0; background:#c3f4f1; color:#0b1a21; font-family:'Big Shoulders Display', Impact, sans-serif; font-size:24px; font-weight:900; text-transform:uppercase; letter-spacing:.02em; cursor:pointer; clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))">Done</button>
+</sc-if>
+<sc-if value="{{slip.showItems}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; align-items:center; justify-content:space-between">
+<span style="font-family:Inter, sans-serif; font-size:13px; font-weight:700; color:#d6e1e8">Singles ({{slip.count}})</span>
+<button onClick="{{clearSlip}}" style="min-height:32px; border:0; padding:0; background:transparent; color:#b8c4cc; font-family:Inter, sans-serif; font-size:13px; cursor:pointer">Clear all</button>
+</div>
+<sc-if value="{{slip.isFailed}}" hint-placeholder-val="{{false}}">
+<div role="alert" style="display:flex; gap:10px; padding:12px; border-radius:6px; background:#2c1218; border:1px solid #6b2433; animation:hbIn .3s ease-out">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8fa3" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex:none; margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4M12 16h.01"></path></svg>
+<span style="display:flex; flex-direction:column; gap:4px">
+<span style="font-size:14px; font-weight:800; color:#ffd2db">Bet not placed</span>
+<span style="font-size:13px; color:#f2c5cf; line-height:1.4">{{slip.failReason}} Your balance wasn’t charged.</span>
+</span>
+</div>
+</sc-if>
+<sc-if value="{{slip.anyChanged}}" hint-placeholder-val="{{false}}">
+<div role="status" style="display:flex; gap:10px; padding:12px; border-radius:6px; background:#2a2612; border:1px solid #6b5a1f; animation:hbIn .3s ease-out">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f8d466" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none; margin-top:1px"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"></path></svg>
+<span style="display:flex; flex-direction:column; gap:4px">
+<span style="font-size:14px; font-weight:800; color:#fbe7a6">{{slip.changedTitle}}</span>
+<span style="font-size:13px; color:#e9dcae; line-height:1.4">Check the new prices below, then accept to continue.</span>
+</span>
+</div>
+</sc-if>
+<sc-if value="{{slip.anySusp}}" hint-placeholder-val="{{false}}">
+<div role="status" style="display:flex; gap:10px; padding:12px; border-radius:6px; background:#13242c; border:1px solid #2d4250; animation:hbIn .3s ease-out">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8c4cc" stroke-width="2.2" aria-hidden="true" style="flex:none; margin-top:1px"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+<span style="display:flex; flex-direction:column; gap:4px; flex:1">
+<span style="font-size:14px; font-weight:800">{{slip.suspTitle}}</span>
+<span style="font-size:13px; color:#b8c4cc; line-height:1.4">It may reopen in a moment. Remove it to place the rest now.</span>
+<button onClick="{{removeSusp}}" style="align-self:flex-start; min-height:36px; margin-top:4px; padding:0 12px; border-radius:4px; border:1px solid #2d4250; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; font-size:13px; font-weight:700; cursor:pointer">Remove suspended</button>
+</span>
+</div>
+</sc-if>
+<sc-for list="{{slip.items}}" as="it" hint-placeholder-count="2">
+<div class="hb-card hb-flat" style="{{it.cardStyle}}">
+<div aria-hidden="true" style="{{it.accent}}"></div>
+<div style="display:flex; align-items:flex-start; gap:10px">
+<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px">
+<span style="font-family:Inter, sans-serif; font-size:15px; font-weight:800; color:{{it.labelColor}}">{{it.label}}</span>
+<span style="font-size:12px; color:#b8c4cc">{{it.market}}</span>
+<span style="display:flex; align-items:center; gap:6px; font-family:Inter, sans-serif; font-size:11px; color:#8a96a4; min-width:0">
+<sc-if value="{{it.live}}" hint-placeholder-val="{{false}}"><span style="font-size:10px; font-weight:800; letter-spacing:.04em; color:#ffffff; background:#df1646; padding:1px 5px; border-radius:3px">LIVE</span></sc-if>
+<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{it.matchLine}}</span>
+</span>
+</div>
+<div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px">
+<sc-if value="{{it.locked}}" hint-placeholder-val="{{false}}">
+<span style="display:flex; align-items:center; gap:4px; font-family:Inter, sans-serif; font-size:11px; font-weight:800; color:#b8c4cc; background:#13242c; padding:4px 8px; border-radius:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Suspended</span>
+</sc-if>
+<sc-if value="{{it.unlocked}}" hint-placeholder-val="{{true}}">
+<span style="font-family:Inter, sans-serif; font-size:18px; font-weight:800; color:{{it.oddsColor}}">{{it.arrow}}{{it.oddsText}}</span>
+<sc-if value="{{it.changed}}" hint-placeholder-val="{{false}}"><span style="font-family:Inter, sans-serif; font-size:11px; color:#8a96a4; text-decoration:line-through">was {{it.oldOdds}}</span></sc-if>
+</sc-if>
+</div>
+<button onClick="{{it.remove}}" aria-label="{{it.removeLabel}}" style="width:32px; height:32px; flex:none; display:flex; align-items:center; justify-content:center; border:0; border-radius:6px; background:#13242c; color:#b8c4cc; cursor:pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+</button>
+</div>
+<sc-if value="{{it.unlocked}}" hint-placeholder-val="{{true}}">
+<label style="display:flex; align-items:center; gap:6px; height:48px; padding:0 12px; border-radius:6px; border:1px solid {{it.inputBorder}}; background:#051016">
+<span style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)">Stake for {{it.label}}</span>
+<input inputmode="decimal" placeholder="Stake" value="{{it.stake}}" onChange="{{it.onStake}}" style="flex:1; min-width:0; border:0; outline:none; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; font-size:16px; font-weight:700">
+<span style="font-family:Inter, sans-serif; font-size:11px; font-weight:700; letter-spacing:.08em; color:#8a96a4">USDT</span>
+</label>
+<div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px">
+<sc-for list="{{it.chips}}" as="ch" hint-placeholder-count="4">
+<button onClick="{{ch.go}}" style="min-height:40px; border-radius:6px; border:1px solid #233036; background:#13242c; color:#e2ecf1; font-family:Inter, sans-serif; font-size:13px; font-weight:700; cursor:pointer">{{ch.label}}</button>
+</sc-for>
+</div>
+<div style="display:flex; justify-content:space-between; align-items:center; font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc">
+<span>Potential return</span><span style="font-weight:800; color:#f2fbff">{{it.retText}} USDT</span>
+</div>
+<sc-if value="{{it.hasErr}}" hint-placeholder-val="{{false}}"><span style="font-size:12px; color:#ff9db0">{{it.err}}</span></sc-if>
+</sc-if>
+</div>
+</sc-for>
+</sc-if>
+</div>
+<sc-if value="{{slip.showFooter}}" hint-placeholder-val="{{false}}">
+<div style="flex:none; border-top:1px solid #1a2b33; padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px; background:#081820">
+<button role="switch" aria-checked="{{autoHigher}}" onClick="{{toggleAuto}}" style="display:flex; align-items:center; gap:10px; min-height:36px; border:0; padding:0; background:transparent; color:#b8c4cc; font-family:Inter, sans-serif; font-size:13px; text-align:left; cursor:pointer">
+<span style="{{autoTrack}}"><span style="{{autoKnob}}"></span></span>
+Accept higher odds automatically
+</button>
+<div style="display:flex; justify-content:space-between; font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc"><span>Total stake</span><span style="color:#f2fbff; font-weight:800">{{slip.totalText}}</span></div>
+<div style="display:flex; justify-content:space-between; align-items:baseline; font-family:Inter, sans-serif"><span style="font-size:12px; color:#b8c4cc">Potential return</span><span style="font-size:18px; font-weight:800; color:#c3f4f1">{{slip.retText}}</span></div>
+<button class="{{slip.ctaClass}}" onClick="{{slip.ctaGo}}" disabled="{{slip.ctaDisabled}}" style="{{slip.ctaStyle}}">
+<sc-if value="{{slip.placing}}" hint-placeholder-val="{{false}}"><span style="width:18px; height:18px; border-radius:50%; border:3px solid #0b1a21; border-right-color:transparent; display:inline-block; animation:hbSpin .7s linear infinite"></span></sc-if>
+{{slip.cta}}
+</button>
+<span style="text-align:center; font-family:Inter, sans-serif; font-size:10px; letter-spacing:.08em; color:#8a96a4">Singles only · decimal odds · balance {{balanceText}} USDT</span>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{tabBets}}" hint-placeholder-val="{{false}}">
+<div style="flex:1; min-height:0; overflow-y:auto; padding:14px; display:grid; align-content:start; grid-template-columns:minmax(0,1fr); grid-auto-rows:max-content; gap:12px">
+<div role="tablist" aria-label="Open or settled" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:8px; background:#051016">
+<button role="tab" aria-selected="{{mb.isOpen}}" onClick="{{mb.showOpen}}" style="{{mb.openStyle}}">Open · {{mb.openCount}}</button>
+<button role="tab" aria-selected="{{mb.isSettled}}" onClick="{{mb.showSettled}}" style="{{mb.settledStyle}}">Settled · {{mb.settledCount}}</button>
+</div>
+<sc-if value="{{mb.isOpen}}" hint-placeholder-val="{{true}}">
+<sc-for list="{{mb.open}}" as="b" hint-placeholder-count="2">
+<div class="hb-card" style="position:relative; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:6px; background:#0d1f29; border:1px solid {{b.border}}">
+<div aria-hidden="true" style="position:absolute; left:0; top:0; bottom:0; width:3px; background:{{b.bar}}"></div>
+<div style="display:flex; align-items:baseline; gap:8px">
+<span style="flex:1; font-size:16px; font-weight:700">{{b.label}}</span>
+<span style="font-family:Inter, sans-serif; font-size:15px; font-weight:800">{{b.oddsText}}</span>
+</div>
+<span style="font-size:12px; color:#b8c4cc">{{b.market}}</span>
+<span style="display:flex; align-items:center; gap:6px; font-family:Inter, sans-serif; font-size:11px; color:#b8c4cc">
+<sc-if value="{{b.live}}" hint-placeholder-val="{{false}}"><span style="font-size:10px; font-weight:800; letter-spacing:.04em; color:#ffffff; background:#df1646; padding:1px 5px; border-radius:3px">LIVE</span></sc-if>
+{{b.matchLine}}
+</span>
+<div style="display:flex; justify-content:space-between; font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc"><span>Stake {{b.stakeText}}</span><span>To return <b style="color:#f2fbff">{{b.retText}}</b></span></div>
+<sc-if value="{{b.idle}}" hint-placeholder-val="{{true}}">
+<button onClick="{{b.ask}}" disabled="{{b.noCash}}" style="{{b.cashStyle}}">{{b.cashText}}</button>
+</sc-if>
+<sc-if value="{{b.confirming}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; gap:8px; padding:10px; border-radius:6px; background:#051016; border:1px solid #233036; animation:hbIn .25s ease-out">
+<span style="font-size:13px; color:#d6e1e8">Cash out for <b style="color:#c3f4f1">{{b.cashValue}}</b>? This settles the bet now.</span>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+<button onClick="{{b.cancel}}" style="min-height:44px; border-radius:6px; border:1px solid #233036; background:transparent; color:#f2fbff; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:pointer">Keep bet</button>
+<button onClick="{{b.confirm}}" style="min-height:44px; border-radius:6px; border:0; background:#c3f4f1; color:#0b1a21; font-family:Inter, sans-serif; font-size:14px; font-weight:800; cursor:pointer">Confirm</button>
+</div>
+</div>
+</sc-if>
+<span style="font-family:Inter, sans-serif; font-size:10px; letter-spacing:.06em; color:#8a96a4">{{b.id}} · {{b.placed}}</span>
+</div>
+</sc-for>
+<sc-if value="{{mb.noOpen}}" hint-placeholder-val="{{false}}">
+<div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:30px 8px">
+<span style="font-size:16px; font-weight:700">No open bets</span>
+<span style="font-size:13px; color:#b8c4cc">Bets you place show here until they settle.</span>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{mb.isSettled}}" hint-placeholder-val="{{false}}">
+<sc-for list="{{mb.settled}}" as="b" hint-placeholder-count="3">
+<div class="hb-card" style="position:relative; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:6px; background:#0d1f29; border:1px solid #1c2e37">
+<div aria-hidden="true" style="position:absolute; left:0; top:0; bottom:0; width:3px; background:{{b.bar}}"></div>
+<div style="display:flex; align-items:center; gap:8px">
+<span style="flex:1; font-size:16px; font-weight:700">{{b.label}}</span>
+<span style="{{b.badgeStyle}}">{{b.badge}}</span>
+</div>
+<span style="font-size:12px; color:#b8c4cc">{{b.market}} · {{b.matchName}}</span>
+<div style="display:flex; justify-content:space-between; font-family:Inter, sans-serif; font-size:12px; color:#b8c4cc"><span>{{b.stakeText}} @ {{b.oddsText}}</span><span>Returned <b style="color:{{b.retColor}}">{{b.retText}}</b></span></div>
+<span style="font-family:Inter, sans-serif; font-size:10px; letter-spacing:.06em; color:#8a96a4">{{b.id}} · {{b.placed}}</span>
+</div>
+</sc-for>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</aside>
+</div>
+<sc-if value="{{isMobile}}" hint-placeholder-val="{{false}}">
+<div style="flex:none; position:relative; z-index:3; background:#051016; border-top:1px solid #1a2b33">
+<sc-if value="{{showSlipBar}}" hint-placeholder-val="{{false}}">
+<div style="padding:8px 10px 0">
+<button onClick="{{openSheet}}" style="width:100%; display:flex; align-items:center; gap:10px; min-height:54px; padding:0 14px; border:0; background:{{barBg}}; color:#0b1a21; cursor:pointer; text-align:left; clip-path:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); animation:hbSheet .3s ease-out">
+<span style="min-width:28px; height:28px; padding:0 6px; border-radius:14px; background:#0b1a21; color:#c3f4f1; font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center">{{slip.count}}</span>
+<span style="flex:1; display:flex; flex-direction:column; line-height:1.1">
+<span style="font-family:'Big Shoulders Display', Impact, sans-serif; font-size:21px; font-weight:900; text-transform:uppercase">{{barTitle}}</span>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700">{{barSub}}</span>
+</span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>
+</button>
+</div>
+</sc-if>
+<nav aria-label="Primary" style="display:flex">
+<button onClick="{{goHome}}" style="{{bn.home}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Home
+</button>
+<button onClick="{{goLive}}" style="{{bn.live}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>Live {{cnt.all}}
+</button>
+<button onClick="{{goFootball}}" style="{{bn.football}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m12 7.5 4 2.9-1.5 4.6h-5L8 10.4z"></path><path d="M12 3v4.5M21 10.5h-5M17.5 19.5 14.5 15M6.5 19.5 9.5 15M3 10.5h5"></path></svg>Football
+</button>
+<button onClick="{{openMyBets}}" style="{{bn.bets}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4z"></path><path d="M10 7v12"></path></svg>My bets
+</button>
+<button onClick="{{goSearch}}" style="{{bn.search}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search
+</button>
+</nav>
+</div>
+</sc-if>
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+<div role="status" style="{{toastStyle}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c3f4f1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+<span>{{toast}}</span>
+</div>
+</sc-if>
+</div>
+</template>
+<div id="proto">
+  <button type="button" aria-expanded="false" aria-controls="proto-menu">Prototype ▾</button>
+  <div class="menu" id="proto-menu">
+    <span>Jump to a state</span>
+    <a href="./">Live feed (default)</a>
+    <a href="?page=match">Match page · Arsenal v Brighton</a>
+    <a href="?page=match&slip=one&scenario=odds-change">Odds change on your slip</a>
+    <a href="?page=match&slip=one&scenario=suspended">Selection suspended</a>
+    <a href="?page=match&slip=one&scenario=failure">Bet fails, then retry</a>
+    <a href="?page=match&slip=placed&sheet=1">Bet placed receipt</a>
+    <a href="?tab=mybets&sheet=1">My bets · cash out</a>
+    <a href="?page=live&scenario=nothing-live">Nothing live</a>
+    <span>Sample data only · no real money</span>
+  </div>
+</div>
+<script>!function(n){"function"==typeof define&&define.amd?define(n):n()}(function(){var n,l,t,u,i,o,e,r,f,c,s,a,h,p=65536,v=1<<17,d={},y=[],w=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i,_=Array.isArray;function g(n,l){for(var t in l)n[t]=l[t];return n}function m(n){n&&n.parentNode&&n.parentNode.removeChild(n)}function b(l,t,u){var i,o,e,r={};for(e in t)"key"==e?i=t[e]:"ref"==e?o=t[e]:r[e]=t[e];if(arguments.length>2&&(r.children=arguments.length>3?n.call(arguments,2):u),"function"==typeof l&&null!=l.defaultProps)for(e in l.defaultProps)void 0===r[e]&&(r[e]=l.defaultProps[e]);return k(l,r,i,o,null)}function k(n,u,i,o,e){var r={type:n,props:u,key:i,ref:o,__k:null,__:null,__b:0,__e:null,__d:void 0,__c:null,constructor:void 0,__v:null==e?++t:e,__i:-1,__u:0};return null==e&&null!=l.vnode&&l.vnode(r),r}function C(n){return n.children}function x(n,l){this.props=n,this.context=l}function S(n,l){if(null==l)return n.__?S(n.__,n.__i+1):null;for(var t;l<n.__k.length;l++)if(null!=(t=n.__k[l])&&null!=t.__e)return t.__e;return"function"==typeof n.type?S(n):null}function M(n){var l,t;if(null!=(n=n.__)&&null!=n.__c){for(n.__e=n.__c.base=null,l=0;l<n.__k.length;l++)if(null!=(t=n.__k[l])&&null!=t.__e){n.__e=n.__c.base=t.__e;break}return M(n)}}function P(n){(!n.__d&&(n.__d=!0)&&i.push(n)&&!$.__r++||o!==l.debounceRendering)&&((o=l.debounceRendering)||e)($)}function $(){var n,t,u,o,e,f,c,s;for(i.sort(r);n=i.shift();)n.__d&&(t=i.length,o=void 0,f=(e=(u=n).__v).__e,c=[],s=[],u.__P&&((o=g({},e)).__v=e.__v+1,l.vnode&&l.vnode(o),O(u.__P,o,e,u.__n,u.__P.namespaceURI,32&e.__u?[f]:null,c,null==f?S(e):f,!!(32&e.__u),s),o.__v=e.__v,o.__.__k[o.__i]=o,V(c,o,s),o.__e!=f&&M(o)),i.length>t&&i.sort(r));$.__r=0}function I(n,l,t,u,i,o,e,r,f,c,s){var a,h,v,w,_,g=u&&u.__k||y,m=l.length;for(t.__d=f,A(t,l,g),f=t.__d,a=0;a<m;a++)null!=(v=t.__k[a])&&(h=-1===v.__i?d:g[v.__i]||d,v.__i=a,O(n,v,h,i,o,e,r,f,c,s),w=v.__e,v.ref&&h.ref!=v.ref&&(h.ref&&z(h.ref,null,v),s.push(v.ref,v.__c||w,v)),null==_&&null!=w&&(_=w),v.__u&p||h.__k===v.__k?f=E(v,f,n):"function"==typeof v.type&&void 0!==v.__d?f=v.__d:w&&(f=w.nextSibling),v.__d=void 0,v.__u&=-196609);t.__d=f,t.__e=_}function A(n,l,t){var u,i,o,e,r,f=l.length,c=t.length,s=c,a=0;for(n.__k=[],u=0;u<f;u++)null!=(i=l[u])&&"boolean"!=typeof i&&"function"!=typeof i?(e=u+a,(i=n.__k[u]="string"==typeof i||"number"==typeof i||"bigint"==typeof i||i.constructor==String?k(null,i,null,null,null):_(i)?k(C,{children:i},null,null,null):void 0===i.constructor&&i.__b>0?k(i.type,i.props,i.key,i.ref?i.ref:null,i.__v):i).__=n,i.__b=n.__b+1,o=null,-1!==(r=i.__i=F(i,t,e,s))&&(s--,(o=t[r])&&(o.__u|=v)),null==o||null===o.__v?(-1==r&&a--,"function"!=typeof i.type&&(i.__u|=p)):r!==e&&(r==e-1?a--:r==e+1?a++:(r>e?a--:a++,i.__u|=p))):i=n.__k[u]=null;if(s)for(u=0;u<c;u++)null!=(o=t[u])&&0==(o.__u&v)&&(o.__e==n.__d&&(n.__d=S(o)),N(o,o))}function E(n,l,t){var u,i;if("function"==typeof n.type){for(u=n.__k,i=0;u&&i<u.length;i++)u[i]&&(u[i].__=n,l=E(u[i],l,t));return l}n.__e!=l&&(l&&n.type&&!t.contains(l)&&(l=S(n)),t.insertBefore(n.__e,l||null),l=n.__e);do{l=l&&l.nextSibling}while(null!=l&&8===l.nodeType);return l}function F(n,l,t,u){var i=n.key,o=n.type,e=t-1,r=t+1,f=l[t];if(null===f||f&&i==f.key&&o===f.type&&0==(f.__u&v))return t;if(u>(null!=f&&0==(f.__u&v)?1:0))for(;e>=0||r<l.length;){if(e>=0){if((f=l[e])&&0==(f.__u&v)&&i==f.key&&o===f.type)return e;e--}if(r<l.length){if((f=l[r])&&0==(f.__u&v)&&i==f.key&&o===f.type)return r;r++}}return-1}function H(n,l,t){"-"===l[0]?n.setProperty(l,null==t?"":t):n[l]=null==t?"":"number"!=typeof t||w.test(l)?t:t+"px"}function L(n,l,t,u,i){var o;n:if("style"===l)if("string"==typeof t)n.style.cssText=t;else{if("string"==typeof u&&(n.style.cssText=u=""),u)for(l in u)t&&l in t||H(n.style,l,"");if(t)for(l in t)u&&t[l]===u[l]||H(n.style,l,t[l])}else if("o"===l[0]&&"n"===l[1])o=l!==(l=l.replace(/(PointerCapture)$|Capture$/i,"$1")),l=l.toLowerCase()in n||"onFocusOut"===l||"onFocusIn"===l?l.toLowerCase().slice(2):l.slice(2),n.l||(n.l={}),n.l[l+o]=t,t?u?t.t=u.t:(t.t=f,n.addEventListener(l,o?s:c,o)):n.removeEventListener(l,o?s:c,o);else{if("http://www.w3.org/2000/svg"==i)l=l.replace(/xlink(H|:h)/,"h").replace(/sName$/,"s");else if("width"!=l&&"height"!=l&&"href"!=l&&"list"!=l&&"form"!=l&&"tabIndex"!=l&&"download"!=l&&"rowSpan"!=l&&"colSpan"!=l&&"role"!=l&&"popover"!=l&&l in n)try{n[l]=null==t?"":t;break n}catch(n){}"function"==typeof t||(null==t||!1===t&&"-"!==l[4]?n.removeAttribute(l):n.setAttribute(l,"popover"==l&&1==t?"":t))}}function T(n){return function(t){if(this.l){var u=this.l[t.type+n];if(null==t.u)t.u=f++;else if(t.u<u.t)return;return u(l.event?l.event(t):t)}}}function O(n,t,u,i,o,e,r,f,c,s){var a,h,p,v,d,y,w,m,b,k,S,M,P,$,A,E,F=t.type;if(void 0!==t.constructor)return null;128&u.__u&&(c=!!(32&u.__u),e=[f=t.__e=u.__e]),(a=l.__b)&&a(t);n:if("function"==typeof F)try{if(m=t.props,b="prototype"in F&&F.prototype.render,k=(a=F.contextType)&&i[a.__c],S=a?k?k.props.value:a.__:i,u.__c?w=(h=t.__c=u.__c).__=h.__E:(b?t.__c=h=new F(m,S):(t.__c=h=new x(m,S),h.constructor=F,h.render=R),k&&k.sub(h),h.props=m,h.state||(h.state={}),h.context=S,h.__n=i,p=h.__d=!0,h.__h=[],h._sb=[]),b&&null==h.__s&&(h.__s=h.state),b&&null!=F.getDerivedStateFromProps&&(h.__s==h.state&&(h.__s=g({},h.__s)),g(h.__s,F.getDerivedStateFromProps(m,h.__s))),v=h.props,d=h.state,h.__v=t,p)b&&null==F.getDerivedStateFromProps&&null!=h.componentWillMount&&h.componentWillMount(),b&&null!=h.componentDidMount&&h.__h.push(h.componentDidMount);else{if(b&&null==F.getDerivedStateFromProps&&m!==v&&null!=h.componentWillReceiveProps&&h.componentWillReceiveProps(m,S),!h.__e&&(null!=h.shouldComponentUpdate&&!1===h.shouldComponentUpdate(m,h.__s,S)||t.__v===u.__v)){for(t.__v!==u.__v&&(h.props=m,h.state=h.__s,h.__d=!1),t.__e=u.__e,t.__k=u.__k,t.__k.some(function(n){n&&(n.__=t)}),M=0;M<h._sb.length;M++)h.__h.push(h._sb[M]);h._sb=[],h.__h.length&&r.push(h);break n}null!=h.componentWillUpdate&&h.componentWillUpdate(m,h.__s,S),b&&null!=h.componentDidUpdate&&h.__h.push(function(){h.componentDidUpdate(v,d,y)})}if(h.context=S,h.props=m,h.__P=n,h.__e=!1,P=l.__r,$=0,b){for(h.state=h.__s,h.__d=!1,P&&P(t),a=h.render(h.props,h.state,h.context),A=0;A<h._sb.length;A++)h.__h.push(h._sb[A]);h._sb=[]}else do{h.__d=!1,P&&P(t),a=h.render(h.props,h.state,h.context),h.state=h.__s}while(h.__d&&++$<25);h.state=h.__s,null!=h.getChildContext&&(i=g(g({},i),h.getChildContext())),b&&!p&&null!=h.getSnapshotBeforeUpdate&&(y=h.getSnapshotBeforeUpdate(v,d)),I(n,_(E=null!=a&&a.type===C&&null==a.key?a.props.children:a)?E:[E],t,u,i,o,e,r,f,c,s),h.base=t.__e,t.__u&=-161,h.__h.length&&r.push(h),w&&(h.__E=h.__=null)}catch(n){if(t.__v=null,c||null!=e){for(t.__u|=c?160:128;f&&8===f.nodeType&&f.nextSibling;)f=f.nextSibling;e[e.indexOf(f)]=null,t.__e=f}else t.__e=u.__e,t.__k=u.__k;l.__e(n,t,u)}else null==e&&t.__v===u.__v?(t.__k=u.__k,t.__e=u.__e):t.__e=j(u.__e,t,u,i,o,e,r,c,s);(a=l.diffed)&&a(t)}function V(n,t,u){t.__d=void 0;for(var i=0;i<u.length;i++)z(u[i],u[++i],u[++i]);l.__c&&l.__c(t,n),n.some(function(t){try{n=t.__h,t.__h=[],n.some(function(n){n.call(t)})}catch(n){l.__e(n,t.__v)}})}function j(t,u,i,o,e,r,f,c,s){var a,h,p,v,y,w,g,b=i.props,k=u.props,C=u.type;if("svg"===C?e="http://www.w3.org/2000/svg":"math"===C?e="http://www.w3.org/1998/Math/MathML":e||(e="http://www.w3.org/1999/xhtml"),null!=r)for(a=0;a<r.length;a++)if((y=r[a])&&"setAttribute"in y==!!C&&(C?y.localName===C:3===y.nodeType)){t=y,r[a]=null;break}if(null==t){if(null===C)return document.createTextNode(k);t=document.createElementNS(e,C,k.is&&k),c&&(l.__m&&l.__m(u,r),c=!1),r=null}if(null===C)b===k||c&&t.data===k||(t.data=k);else{if(r=r&&n.call(t.childNodes),b=i.props||d,!c&&null!=r)for(b={},a=0;a<t.attributes.length;a++)b[(y=t.attributes[a]).name]=y.value;for(a in b)if(y=b[a],"children"==a);else if("dangerouslySetInnerHTML"==a)p=y;else if(!(a in k)){if("value"==a&&"defaultValue"in k||"checked"==a&&"defaultChecked"in k)continue;L(t,a,null,y,e)}for(a in k)y=k[a],"children"==a?v=y:"dangerouslySetInnerHTML"==a?h=y:"value"==a?w=y:"checked"==a?g=y:c&&"function"!=typeof y||b[a]===y||L(t,a,y,b[a],e);if(h)c||p&&(h.__html===p.__html||h.__html===t.innerHTML)||(t.innerHTML=h.__html),u.__k=[];else if(p&&(t.innerHTML=""),I(t,_(v)?v:[v],u,i,o,"foreignObject"===C?"http://www.w3.org/1999/xhtml":e,r,f,r?r[0]:i.__k&&S(i,0),c,s),null!=r)for(a=r.length;a--;)m(r[a]);c||(a="value","progress"===C&&null==w?t.removeAttribute("value"):void 0!==w&&(w!==t[a]||"progress"===C&&!w||"option"===C&&w!==b[a])&&L(t,a,w,b[a],e),a="checked",void 0!==g&&g!==t[a]&&L(t,a,g,b[a],e))}return t}function z(n,t,u){try{if("function"==typeof n){var i="function"==typeof n.__u;i&&n.__u(),i&&null==t||(n.__u=n(t))}else n.current=t}catch(n){l.__e(n,u)}}function N(n,t,u){var i,o;if(l.unmount&&l.unmount(n),(i=n.ref)&&(i.current&&i.current!==n.__e||z(i,null,t)),null!=(i=n.__c)){if(i.componentWillUnmount)try{i.componentWillUnmount()}catch(n){l.__e(n,t)}i.base=i.__P=null}if(i=n.__k)for(o=0;o<i.length;o++)i[o]&&N(i[o],t,u||"function"!=typeof n.type);u||m(n.__e),n.__c=n.__=n.__e=n.__d=void 0}function R(n,l,t){return this.constructor(n,t)}function q(t,u,i){var o,e,r,f;l.__&&l.__(t,u),e=(o="function"==typeof i)?null:i&&i.__k||u.__k,r=[],f=[],O(u,t=(!o&&i||u).__k=b(C,null,[t]),e||d,d,u.namespaceURI,!o&&i?[i]:e?null:u.firstChild?n.call(u.childNodes):null,r,!o&&i?i:e?e.__e:u.firstChild,o,f),V(r,t,f)}n=y.slice,l={__e:function(n,l,t,u){for(var i,o,e;l=l.__;)if((i=l.__c)&&!i.__)try{if((o=i.constructor)&&null!=o.getDerivedStateFromError&&(i.setState(o.getDerivedStateFromError(n)),e=i.__d),null!=i.componentDidCatch&&(i.componentDidCatch(n,u||{}),e=i.__d),e)return i.__E=i}catch(l){n=l}throw n}},t=0,u=function(n){return null!=n&&null==n.constructor},x.prototype.setState=function(n,l){var t;t=null!=this.__s&&this.__s!==this.state?this.__s:this.__s=g({},this.state),"function"==typeof n&&(n=n(g({},t),this.props)),n&&g(t,n),null!=n&&this.__v&&(l&&this._sb.push(l),P(this))},x.prototype.forceUpdate=function(n){this.__v&&(this.__e=!0,n&&this.__h.push(n),P(this))},x.prototype.render=C,i=[],e="function"==typeof Promise?Promise.prototype.then.bind(Promise.resolve()):setTimeout,r=function(n,l){return n.__v.__b-l.__v.__b},$.__r=0,f=0,c=T(!1),s=T(!0),a=0,h={__proto__:null,render:q,hydrate:function n(l,t){q(l,t,n)},createElement:b,h:b,Fragment:C,createRef:function(){return{current:null}},isValidElement:u,Component:x,cloneElement:function(l,t,u){var i,o,e,r,f=g({},l.props);for(e in l.type&&l.type.defaultProps&&(r=l.type.defaultProps),t)"key"==e?i=t[e]:"ref"==e?o=t[e]:f[e]=void 0===t[e]&&void 0!==r?r[e]:t[e];return arguments.length>2&&(f.children=arguments.length>3?n.call(arguments,2):u),k(l.type,f,i||l.key,o||l.ref,null)},createContext:function(n,l){var t={__c:l="__cC"+a++,__:n,Consumer:function(n,l){return n.children(l)},Provider:function(n){var t,u;return this.getChildContext||(t=new Set,(u={})[l]=this,this.getChildContext=function(){return u},this.componentWillUnmount=function(){t=null},this.shouldComponentUpdate=function(n){this.props.value!==n.value&&t.forEach(function(n){n.__e=!0,P(n)})},this.sub=function(n){t.add(n);var l=n.componentWillUnmount;n.componentWillUnmount=function(){t&&t.delete(n),l&&l.call(n)}}),n.children}};return t.Provider.__=t.Consumer.contextType=t},toChildArray:function n(l,t){return t=t||[],null==l||"boolean"==typeof l||(_(l)?l.some(function(l){n(l,t)}):t.push(l)),t},options:l},typeof module<"u"?module.exports=h:self.preact=h});
+
+</script>
+<script>!function(){"use strict";var t=window.preact,n=t.h,e=t.Component,r=/^\s*\{\{\s*([^{}]+?)\s*\}\}\s*$/,a=/\{\{\s*([^{}]+?)\s*\}\}/g,i={onclick:"onClick",onchange:"onChange",oninput:"onInput",onkeydown:"onKeyDown",onfocus:"onFocus",onblur:"onBlur"};function o(t,n){var e=n.match(r);if(e)return{name:t,raw:e[1]};if(-1!==n.indexOf("{{")){var i,o=[],s=0;for(a.lastIndex=0;i=a.exec(n);)i.index>s&&o.push(n.slice(s,i.index)),o.push({path:i[1]}),s=a.lastIndex;return s<n.length&&o.push(n.slice(s)),{name:t,parts:o}}return{name:t,lit:n}}function s(t){if(-1===t.indexOf("{{"))return t;var n,e=[],r=0;for(a.lastIndex=0;n=a.exec(t);)n.index>r&&e.push(t.slice(r,n.index)),e.push({path:n[1]}),r=a.lastIndex;return r<t.length&&e.push(t.slice(r)),{parts:e}}function u(t){if(3===t.nodeType){var n=t.nodeValue;return n.trim()?{text:s(n)}:/\n/.test(n)?null:" "}if(1!==t.nodeType)return null;var e=t.tagName.toLowerCase();if("helmet"===e||"script"===e)return null;for(var r="http://www.w3.org/2000/svg"===t.namespaceURI?t.localName:e,a=[],l=0;l<t.attributes.length;l++){var f=t.attributes[l],p=f.name;i[p]&&(p=i[p]),0!==p.indexOf("hint-")&&a.push(o(p,f.value))}for(var c=[],h="template"===e?t.content.childNodes:t.childNodes,d=0;d<h.length;d++){var g=u(h[d]);null!==g&&c.push(g)}return{tag:r,attrs:a,kids:c,isInput:"input"===e||"textarea"===e}}function l(t,n){if("true"===(t=t.trim()))return!0;if("false"===t)return!1;if("null"===t)return null;if(/^-?\d+(\.\d+)?$/.test(t))return parseFloat(t);for(var e,r=t.split("."),a=r[0],i=n.length-1;i>=0;i--)if(n[i]&&Object.prototype.hasOwnProperty.call(n[i],a)){e=n[i][a];break}for(var o=1;o<r.length;o++){if(null==e)return;e=e[r[o]]}return e}function f(t,n){for(var e="",r=0;r<t.length;r++){var a=t[r];if("string"==typeof a)e+=a;else{var i=l(a.path,n);e+=null==i?"":String(i)}}return e}function p(t,n){return"raw"in t?l(t.raw,n):"parts"in t?f(t.parts,n):t.lit}function c(t,n,e){for(var r=0;r<t.attrs.length;r++)if(t.attrs[r].name===n)return p(t.attrs[r],e)}function h(t,n,e){for(var r=0;r<t.length;r++)d(t[r],n,e);return e}function d(t,e,r){if("string"!=typeof t)if(void 0===t.text)if("sc-if"!==t.tag)if("sc-for"!==t.tag){for(var a={},i=0;i<t.attrs.length;i++){var o=t.attrs[i],s=p(o,e),u=o.name;"onChange"===u&&t.isInput&&(u="onInput"),void 0!==s&&(a[u]=s)}var l=h(t.kids,e,[]);r.push(n.apply(null,[t.tag,a].concat(l)))}else for(var d=c(t,"list",e)||[],g=c(t,"as",e)||"item",v=0;v<d.length;v++){var m={};m[g]=d[v],m.$index=v,h(t.kids,e.concat([m]),r)}else c(t,"value",e)&&h(t.kids,e,r);else r.push("string"==typeof t.text?t.text:f(t.text.parts,e));else r.push(t)}function g(t){e.call(this,t)}g.prototype=Object.create(e.prototype),g.prototype.constructor=g,g.prototype.render=function(){var e=this.renderVals?this.renderVals():{},r=h(window.__DC_TREE.kids,[e],[]);return 1===r.length?r[0]:n(t.Fragment,null,r)},window.DCRuntime={mount:function(e,r,a,i){window.__DC_TREE=u(e);var o=new Function("DCLogic",r+"\n;return Component;")(g);t.render(n(o,a),i)}}}();</script>
+<script>window.__DC_CODE="class Component extends DCLogic{constructor(e){super(e);const t=e||{},a={page:t.startPage||\"home\",sport:\"all\",liveComp:\"all\",fbComp:\"pl\",matchId:\"m1\",marketTab:\"popular\",collapsed:{},navOpen:!0,search:\"\",slip:[],stakes:{},slipTab:t.startTab||\"slip\",status:\"idle\",failReason:\"\",receipt:[],autoHigher:!1,betsTab:\"open\",bets:this.seedBets(),balance:250,followed:[\"arsenal\"],followedComps:[\"pl\"],odds:{},susp:{},tick:0,sheet:!!t.sheet,cashConfirm:null,toast:null,toastAt:0,vw:\"undefined\"!=typeof window?window.innerWidth:1440},s=t.startSlip||\"none\";if(\"none\"!==s){const e=\"one\"===s?[\"m1:mr:0\"]:[\"m1:mr:0\",\"m3:btts:0\"];if(a.slip=e.map(e=>this.entry(e,null)),a.stakes={\"m1:mr:0\":\"10\",\"m3:btts:0\":\"5\"},\"changed\"===s&&(a.odds[\"m1:mr:0\"]={v:1.42,dir:\"up\",t:-1}),\"suspended\"===s&&(a.susp[\"m3:btts\"]={until:1e9,reason:\"Market suspended\"}),\"failed\"===s&&(a.status=\"failed\",a.failReason=\"We lost the connection before your bets were confirmed.\"),\"placed\"===s){const e=a.slip.map((e,t)=>this.betFrom(e,parseFloat(a.stakes[e.id]),t,0));a.receipt=e,a.bets=e.concat(a.bets),a.status=\"placed\",a.balance=235}}\"failure\"===t.scenario&&(this._failNext=!0),this.state=a}componentDidMount(){this._iv=setInterval(()=>this.step(),1e3),this._onR=()=>this.setState({vw:window.innerWidth}),window.addEventListener(\"resize\",this._onR)}componentWillUnmount(){clearInterval(this._iv),clearTimeout(this._pt),window.removeEventListener(\"resize\",this._onR)}D(){if(this._d)return this._d;const e=(e,t,a,s)=>({name:e,disp:t,code:a,color:s}),t={arsenal:e(\"Arsenal\",\"Arsenal\",\"ARS\",\"#ef0107\"),brighton:e(\"Brighton & Hove Albion\",\"Brighton\",\"BHA\",\"#0057b8\"),liverpool:e(\"Liverpool\",\"Liverpool\",\"LIV\",\"#c8102e\"),manutd:e(\"Manchester United\",\"Man Utd\",\"MUN\",\"#da291c\"),mancity:e(\"Manchester City\",\"Man City\",\"MCI\",\"#4a90d9\"),spurs:e(\"Tottenham Hotspur\",\"Spurs\",\"TOT\",\"#3d4f7a\"),chelsea:e(\"Chelsea\",\"Chelsea\",\"CHE\",\"#034694\"),newcastle:e(\"Newcastle United\",\"Newcastle\",\"NEW\",\"#555b63\"),villa:e(\"Aston Villa\",\"Aston Villa\",\"AVL\",\"#7a1e3c\"),westham:e(\"West Ham United\",\"West Ham\",\"WHU\",\"#7a263a\"),realmadrid:e(\"Real Madrid\",\"Real Madrid\",\"RMA\",\"#8d6e1f\"),bayern:e(\"Bayern Munich\",\"Bayern\",\"FCB\",\"#dc052d\"),barca:e(\"Barcelona\",\"Barcelona\",\"BAR\",\"#a50044\"),psg:e(\"Paris Saint-Germain\",\"PSG\",\"PSG\",\"#1c3f8a\"),sevilla:e(\"Sevilla\",\"Sevilla\",\"SEV\",\"#c8102e\"),betis:e(\"Real Betis\",\"Betis\",\"BET\",\"#0b8a43\"),atletico:e(\"Atlético Madrid\",\"Atlético\",\"ATM\",\"#cb3524\"),villarreal:e(\"Villarreal\",\"Villarreal\",\"VIL\",\"#a38200\"),inter:e(\"Inter\",\"Inter\",\"INT\",\"#1a3fa0\"),napoli:e(\"Napoli\",\"Napoli\",\"NAP\",\"#1286c9\"),juve:e(\"Juventus\",\"Juventus\",\"JUV\",\"#52525b\"),milan:e(\"AC Milan\",\"Milan\",\"MIL\",\"#c8102e\"),bvb:e(\"Borussia Dortmund\",\"Dortmund\",\"BVB\",\"#b39200\"),leipzig:e(\"RB Leipzig\",\"Leipzig\",\"RBL\",\"#c8102e\"),leverkusen:e(\"Bayer Leverkusen\",\"Leverkusen\",\"B04\",\"#e32221\"),stuttgart:e(\"VfB Stuttgart\",\"Stuttgart\",\"VFB\",\"#c8102e\"),sinner:e(\"Jannik Sinner\",\"Sinner\",\"SIN\",\"#d4570c\"),alcaraz:e(\"Carlos Alcaraz\",\"Alcaraz\",\"ALC\",\"#9a3412\"),djokovic:e(\"Novak Djokovic\",\"Djokovic\",\"DJO\",\"#1e40af\"),zverev:e(\"Alexander Zverev\",\"Zverev\",\"ZVE\",\"#4b5563\"),celtics:e(\"Boston Celtics\",\"Celtics\",\"BOS\",\"#007a33\"),knicks:e(\"New York Knicks\",\"Knicks\",\"NYK\",\"#e06a12\"),lakers:e(\"Los Angeles Lakers\",\"Lakers\",\"LAL\",\"#552583\"),warriors:e(\"Golden State Warriors\",\"Warriors\",\"GSW\",\"#1d428a\"),navi:e(\"Natus Vincere\",\"NAVI\",\"NAV\",\"#a38200\"),faze:e(\"FaZe Clan\",\"FaZe\",\"FAZ\",\"#c8102e\"),vitality:e(\"Team Vitality\",\"Vitality\",\"VIT\",\"#a38200\"),g2:e(\"G2 Esports\",\"G2\",\"G2\",\"#52525b\"),rangers:e(\"New York Rangers\",\"Rangers\",\"NYR\",\"#0038a8\"),bruins:e(\"Boston Bruins\",\"Bruins\",\"BOS\",\"#a38200\"),oilers:e(\"Edmonton Oilers\",\"Oilers\",\"EDM\",\"#e2621b\"),leafs:e(\"Toronto Maple Leafs\",\"Maple Leafs\",\"TOR\",\"#00205b\")},a=(e,t,a,s,i,o,n)=>Object.assign({id:e,sport:t,comp:a,h:s,a:i,o:o,live:!1,more:64},n||{}),s=[a(\"m1\",\"football\",\"pl\",\"arsenal\",\"brighton\",[1.3,4.8,11],{live:!0,sh:1,sa:0,sec:3134,period:\"2nd half\",more:146,ko:\"Today 17:00\",events:[{min:\"23'\",text:\"Goal · Saka\",c:\"#6ee7a0\"},{min:\"41'\",text:\"Yellow · Dunk\",c:\"#f8d466\"},{min:\"49'\",text:\"Yellow · Rice\",c:\"#f8d466\"}]}),a(\"m2\",\"football\",\"pl\",\"liverpool\",\"manutd\",[1.85,3.7,4.2],{live:!0,sh:0,sa:0,sec:1120,period:\"1st half\",more:162,ko:\"Today 17:30\"}),a(\"m3\",\"football\",\"ucl\",\"realmadrid\",\"bayern\",[2.6,2.9,3.1],{live:!0,sh:2,sa:2,sec:4265,period:\"2nd half\",more:171,ko:\"Today 16:45\",events:[{min:\"12'\",text:\"Goal · Kane\",c:\"#6ee7a0\"},{min:\"29'\",text:\"Goal · Mbappé\",c:\"#6ee7a0\"},{min:\"58'\",text:\"Goal · Musiala\",c:\"#6ee7a0\"},{min:\"66'\",text:\"Goal · Vinícius Jr\",c:\"#6ee7a0\"}]}),a(\"m4\",\"football\",\"laliga\",\"sevilla\",\"betis\",[3.4,3.2,2.25],{live:!0,sh:0,sa:1,sec:2090,period:\"1st half\",more:128,ko:\"Today 17:30\"}),a(\"m5\",\"football\",\"seriea\",\"inter\",\"napoli\",[2.1,3.3,3.6],{live:!0,sh:1,sa:1,sec:2700,ht:!0,period:\"Half-time\",more:133,ko:\"Today 17:15\"}),a(\"t1\",\"tennis\",\"atp\",\"sinner\",\"alcaraz\",[1.55,2.45],{live:!0,sh:1,sa:0,clock:\"Set 2\",period:\"4–3 · 30–15\",more:38,ko:\"Today 16:30\"}),a(\"b1\",\"basketball\",\"nba\",\"celtics\",\"knicks\",[1.35,3.2],{live:!0,sh:78,sa:71,clock:\"Q3\",period:\"6:12 left\",more:92,ko:\"Today 16:30\"}),a(\"e1\",\"esports\",\"cs2\",\"navi\",\"faze\",[1.7,2.1],{live:!0,sh:1,sa:0,clock:\"Map 2\",period:\"Rounds 9–7\",more:24,ko:\"Today 17:00\"}),a(\"h1\",\"icehockey\",\"nhl\",\"rangers\",\"bruins\",[1.65,4.1,4.6],{live:!0,sh:2,sa:1,clock:\"P2\",period:\"11:40 left\",more:57,ko:\"Today 16:00\"}),a(\"m8\",\"football\",\"bundesliga\",\"bvb\",\"leipzig\",[2.3,3.6,2.8],{ko:\"Today 18:30\",mins:25}),a(\"m6\",\"football\",\"pl\",\"mancity\",\"spurs\",[1.5,4.5,5.25],{ko:\"Today 18:45\",mins:40,more:158}),a(\"t2\",\"tennis\",\"atp\",\"djokovic\",\"zverev\",[1.65,2.2],{ko:\"Today 19:00\",mins:55,more:34}),a(\"m7\",\"football\",\"pl\",\"chelsea\",\"newcastle\",[2.05,3.5,3.5],{ko:\"Today 19:15\",mins:70}),a(\"m10\",\"football\",\"seriea\",\"juve\",\"milan\",[2.2,3.1,3.4],{ko:\"Today 19:30\",mins:85}),a(\"m9\",\"football\",\"ucl\",\"barca\",\"psg\",[1.95,3.8,3.4],{ko:\"Today 20:00\",mins:115,more:160}),a(\"b2\",\"basketball\",\"nba\",\"lakers\",\"warriors\",[1.95,1.85],{ko:\"Today 19:30\",mins:85,more:88}),a(\"e2\",\"esports\",\"cs2\",\"vitality\",\"g2\",[1.55,2.4],{ko:\"Today 20:30\",mins:145}),a(\"h2\",\"icehockey\",\"nhl\",\"oilers\",\"leafs\",[2.1,4,2.95],{ko:\"Today 19:00\",mins:55}),a(\"m11\",\"football\",\"laliga\",\"atletico\",\"villarreal\",[1.75,3.6,4.8],{ko:\"Tomorrow 12:00\",mins:1100}),a(\"m12\",\"football\",\"bundesliga\",\"leverkusen\",\"stuttgart\",[1.8,3.9,4.1],{ko:\"Tomorrow 09:30\",mins:950}),a(\"m13\",\"football\",\"pl\",\"villa\",\"westham\",[1.9,3.6,4],{ko:\"Tomorrow 07:00\",mins:800})];return this._d={T:t,P:{arsenal:[\"Bukayo Saka\",\"Kai Havertz\",\"Martin Ødegaard\",\"Gabriel Martinelli\"],brighton:[\"Danny Welbeck\",\"Kaoru Mitoma\",\"Georginio Rutter\"],liverpool:[\"Mohamed Salah\",\"Cody Gakpo\"],manutd:[\"Bruno Fernandes\",\"Rasmus Højlund\"],mancity:[\"Erling Haaland\",\"Phil Foden\"],spurs:[\"James Maddison\",\"Dominic Solanke\"],realmadrid:[\"Kylian Mbappé\",\"Vinícius Júnior\",\"Jude Bellingham\"],bayern:[\"Harry Kane\",\"Jamal Musiala\"],inter:[\"Lautaro Martínez\",\"Marcus Thuram\"],napoli:[\"Romelu Lukaku\",\"Scott McTominay\"]},C:{pl:{name:\"Premier League\",country:\"England\",ini:\"PL\",color:\"#3d195b\"},ucl:{name:\"Champions League\",country:\"Europe\",ini:\"UCL\",color:\"#0b2a6f\"},laliga:{name:\"LaLiga\",country:\"Spain\",ini:\"LL\",color:\"#c0362f\"},seriea:{name:\"Serie A\",country:\"Italy\",ini:\"SA\",color:\"#0b5f9e\"},bundesliga:{name:\"Bundesliga\",country:\"Germany\",ini:\"BL\",color:\"#b00f26\"},atp:{name:\"ATP Finals\",country:\"Turin\",ini:\"ATP\",color:\"#1e3a5f\"},nba:{name:\"NBA\",country:\"USA\",ini:\"NBA\",color:\"#1d428a\"},cs2:{name:\"CS2 Major\",country:\"Esports\",ini:\"CS2\",color:\"#6b4a0e\"},nhl:{name:\"NHL\",country:\"USA & Canada\",ini:\"NHL\",color:\"#2b2b30\"}},M:s,SP:[{id:\"football\",name:\"Football\"},{id:\"basketball\",name:\"Basketball\"},{id:\"tennis\",name:\"Tennis\"},{id:\"icehockey\",name:\"Ice hockey\"},{id:\"esports\",name:\"Esports\"}]},this._d}seedBets(){return[{id:\"HB-70388\",selId:\"m2:mr:0\",label:\"Liverpool\",market:\"Match result\",matchId:\"m2\",odds:1.9,stake:20,placed:\"Today 17:42\",state:\"open\"},{id:\"HB-70391\",selId:\"m3:btts:0\",label:\"Yes\",market:\"Both teams to score\",matchId:\"m3\",odds:1.5,stake:10,placed:\"Today 17:51\",state:\"open\"},{id:\"HB-70212\",label:\"Chelsea\",market:\"Match result\",matchName:\"Chelsea v Spurs\",odds:2.1,stake:15,placed:\"Sun 2 Nov\",state:\"won\",ret:31.5},{id:\"HB-70188\",label:\"Over 2.5\",market:\"Total goals\",matchName:\"Barcelona v Real Madrid\",odds:1.7,stake:10,placed:\"Sat 1 Nov\",state:\"lost\",ret:0},{id:\"HB-70141\",label:\"Jannik Sinner\",market:\"Match winner\",matchName:\"Sinner v Djokovic\",odds:1.8,stake:12,placed:\"Fri 31 Oct\",state:\"cashed\",ret:14.2},{id:\"HB-70097\",label:\"Draw\",market:\"Match result\",matchName:\"Inter v Juventus\",odds:3.3,stake:5,placed:\"Thu 30 Oct\",state:\"void\",ret:5}]}match(e){return this.D().M.find(t=>t.id===e)}matchName(e){const t=this.D(),a=this.match(e);return t.T[a.h].disp+\" v \"+t.T[a.a].disp}marketsFor(e){if(this._mk=this._mk||{},this._mk[e])return this._mk[e];const t=this.D(),a=this.match(e),s=t.T[a.h].disp,i=t.T[a.a].disp,o=t.T[a.h].code,n=t.T[a.a].code,l=e=>Math.round(100*e)/100,r=e=>{const t=1/e;return t>=.93?15:l(Math.max(1.03,.94/(1-t)))},p=t.M.indexOf(a)%5*.07,d=a.o[0],c=a.o[1],h=a.o[2],m=(e,t,a,s,i)=>({k:e,name:t,g:a,cols:s,sels:i.map(e=>({label:e[0],base:e[1]}))});let f=[];const g=\"m1\"===e;if(\"football\"===a.sport){f.push(m(\"mr\",\"Match result\",[\"popular\"],3,[[s,d],[\"Draw\",c],[i,h]])),a.live&&!a.ht&&f.push(m(\"next\",\"Next goal (goal \"+(a.sh+a.sa+1)+\")\",[\"popular\",\"goals\"],3,g?[[s,1.75],[\"No goal\",7.5],[i,2.6]]:[[s,l(Math.max(1.5,1.1*d))],[\"No goal\",l(5+10*p)],[i,l(Math.max(1.5,1.1*h))]])),f.push(m(\"tg\",\"Total goals\",[\"popular\",\"goals\"],2,g?[[\"Over 1.5\",1.36],[\"Under 1.5\",3.1],[\"Over 2.5\",2.2],[\"Under 2.5\",1.65],[\"Over 3.5\",4.2],[\"Under 3.5\",1.2]]:[[\"Over 1.5\",l(1.28+p/2)],[\"Under 1.5\",l(3.4-2*p)],[\"Over 2.5\",l(1.8+p)],[\"Under 2.5\",l(1.98-p)],[\"Over 3.5\",l(3.1+3*p)],[\"Under 3.5\",l(1.36-p/3)]])),f.push(m(\"btts\",\"Both teams to score\",[\"popular\",\"goals\"],2,[[\"Yes\",g?2.4:l(1.62+p)],[\"No\",g?1.53:l(2.2-p)]])),f.push(m(\"dc\",\"Double chance\",[\"popular\"],3,[[o+\" or draw\",l(Math.max(1.02,.95/(1/d+1/c)))],[o+\" or \"+n,l(Math.max(1.02,.95/(1/d+1/h)))],[\"Draw or \"+n,l(Math.max(1.02,.95/(1/c+1/h)))]])),f.push(m(\"hr\",a.live?\"2nd half result\":\"1st half result\",[\"halves\"],3,[[s,l(1.4*d)],[\"Draw\",a.live?2.3:2.1],[i,l(1.3*h)]])),f.push(m(\"hg\",a.live?\"2nd half · total goals\":\"1st half · total goals\",[\"halves\"],2,[[\"Over 0.5\",1.4],[\"Under 0.5\",2.75],[\"Over 1.5\",3.2],[\"Under 1.5\",1.33]])),f.push(m(\"hb\",a.live?\"2nd half · both teams to score\":\"1st half · both teams to score\",[\"halves\"],2,[[\"Yes\",4.5],[\"No\",1.18]])),f.push(m(\"ah\",\"Asian handicap\",[\"handicaps\"],2,[[s+\" −0.5\",d],[i+\" +0.5\",r(d)],[s+\" −1.5\",l(1.85*d)],[i+\" +1.5\",r(l(1.85*d))],[s+\" −2.5\",l(3.6*d)],[i+\" +2.5\",r(l(3.6*d))]])),f.push(m(\"eh\",\"European handicap (−1)\",[\"handicaps\"],3,[[o+\" (−1)\",l(2*d)],[\"Draw (−1)\",3.6],[n+\" (+1)\",l(Math.max(1.3,h/4))]]));const e=t.P[a.h]||[],u=t.P[a.a]||[];if(e.length||u.length){const t=[];e.forEach((e,a)=>t.push([e,l(2.6+.85*a)])),u.forEach((e,a)=>t.push([e,l(4.4+1.3*a)])),f.push(m(\"ags\",\"Anytime goalscorer\",[\"popular\",\"goalscorers\"],2,t)),f.push(m(\"ngs\",a.live?\"Next goalscorer\":\"First goalscorer\",[\"goalscorers\"],2,t.map(e=>[e[0],l(1.9*e[1])])))}f.push(m(\"tc\",\"Total corners\",[\"corners\"],2,[[\"Over 9.5\",1.85],[\"Under 9.5\",1.9],[\"Over 11.5\",3.2],[\"Under 11.5\",1.33]])),f.push(m(\"nc\",a.live?\"Next corner\":\"First corner\",[\"corners\"],2,[[s,1.5],[i,2.5]])),f.push(m(\"tk\",\"Total cards\",[\"corners\"],2,[[\"Over 3.5\",1.95],[\"Under 3.5\",1.8]])),f.push(m(\"pc\",\"Player to be booked\",[\"corners\"],2,e.concat(u).slice(0,4).map((e,t)=>[e,l(3.5+.6*t)]))),f=f.filter(e=>e.sels.length)}else f=\"tennis\"===a.sport?[m(\"mr\",\"Match winner\",[\"popular\"],2,[[s,d],[i,c]]),m(\"sw\",a.live?\"Set 2 winner\":\"Set 1 winner\",[\"popular\"],2,[[s,1.7],[i,2.05]]),m(\"tg\",\"Total games\",[\"popular\"],2,[[\"Over 22.5\",1.8],[\"Under 22.5\",1.95]]),m(\"gh\",\"Game handicap\",[\"popular\"],2,[[s+\" −2.5\",1.85],[i+\" +2.5\",1.9]])]:\"basketball\"===a.sport?[m(\"mr\",\"Moneyline\",[\"popular\"],2,[[s,d],[i,c]]),m(\"sp\",\"Point spread\",[\"popular\"],2,[[s+\" −5.5\",1.9],[i+\" +5.5\",1.9]]),m(\"tp\",\"Total points\",[\"popular\"],2,[[\"Over 221.5\",1.87],[\"Under 221.5\",1.87]]),m(\"q\",a.live?\"Quarter 3 winner\":\"Quarter 1 winner\",[\"popular\"],2,[[s,1.75],[i,2]])]:\"esports\"===a.sport?[m(\"mr\",\"Match winner\",[\"popular\"],2,[[s,d],[i,c]]),m(\"map\",a.live?\"Map 2 winner\":\"Map 1 winner\",[\"popular\"],2,[[s,1.6],[i,2.25]]),m(\"tm\",\"Total maps\",[\"popular\"],2,[[\"Over 2.5\",2.1],[\"Under 2.5\",1.7]])]:[m(\"mr\",\"Match result\",[\"popular\"],3,[[s,d],[\"Draw\",c],[i,h]]),m(\"tg\",\"Total goals\",[\"popular\"],2,[[\"Over 5.5\",1.9],[\"Under 5.5\",1.85]]),m(\"pl\",\"Puck line\",[\"popular\"],2,[[s+\" −1.5\",2.6],[i+\" +1.5\",1.48]])];return this._mk[e]=f,f}findSel(e){const t=e.split(\":\"),a=this.marketsFor(t[0]),s=a.find(e=>e.k===t[1])||a[0],i=s.sels[parseInt(t[2],10)]||s.sels[0];return{label:i.label,base:i.base,market:s.name,matchId:t[0]}}mkey(e){return e.split(\":\").slice(0,2).join(\":\")}cur(e,t){const a=(t=t||this.state).odds[e];return a?a.v:this.findSel(e).base}isSusp(e,t){const a=(t=t||this.state).susp[e];return!!(a&&a.until>t.tick)}isLive(e){return e.live&&\"nothing-live\"!==(this.props.scenario||\"organic\")}isMob(){return!0===this.props.mobile||this.state.vw<760}f2(e){return(Math.round(100*e)/100).toFixed(2)}money(e){return this.f2(e)+\" USDT\"}entry(e,t){const a=this.findSel(e),s=t&&t[e];return{id:e,label:a.label,market:a.market,matchId:a.matchId,taken:s?s.v:a.base}}betFrom(e,t,a,s){return{id:\"HB-\"+(70412+10*s+3*a),selId:e.id,label:e.label,market:e.market,matchId:e.matchId,odds:e.taken,stake:t,placed:\"Just now\",state:\"open\"}}tickPool(e){const t=new Set;if(this.D().M.forEach(e=>{if(this.isLive(e)&&!e.ht){const a=this.marketsFor(e.id)[0];a.sels.forEach((s,i)=>t.add(e.id+\":\"+a.k+\":\"+i))}}),this.isLive(this.match(\"m1\"))){const e=this.marketsFor(\"m1\").find(e=>\"next\"===e.k);e&&e.sels.forEach((e,a)=>t.add(\"m1:next:\"+a))}return\"match\"===e.page&&this.isLive(this.match(e.matchId))&&this.marketsFor(e.matchId).forEach(a=>a.sels.forEach((s,i)=>t.add(e.matchId+\":\"+a.k+\":\"+i))),e.slip.forEach(e=>{this.isLive(this.match(e.matchId))&&t.add(e.id)}),Array.from(t)}step(){this.setState(e=>{const t=e.tick+1,a=this.props.scenario||\"organic\",s=Object.assign({},e.odds),i=Object.assign({},e.susp),o={tick:t},n={susp:i,tick:t},l=(e,a)=>{const i=s[e]?s[e].v:this.findSel(e).base,o=Math.max(1.01,Math.round(100*(i+a))/100);o!==i&&(s[e]={v:o,dir:o>i?\"up\":\"down\",t:t})};if(\"nothing-live\"!==a&&t%2==0){const t=this.tickPool(e);for(let e=0;e<4&&t.length;e++){const e=t.splice(Math.floor(Math.random()*t.length),1)[0];if(this.isSusp(this.mkey(e),n))continue;const a=s[e]?s[e].v:this.findSel(e).base;l(e,(.02+.07*Math.random())*Math.max(1,a/2.5)*(Math.random()<.5?-1:1))}}if(\"odds-change\"===a&&e.slip.length&&t%4==0){const t=e.slip[0];(s[t.id]?s[t.id].v:t.taken)===t.taken&&l(t.id,.15)}return\"nothing-live\"!==a&&t%22==12&&(i[\"m1:mr\"]={until:t+6,reason:\"Goal check\"},i[\"m1:next\"]={until:t+6,reason:\"Goal check\"},i[\"m1:ags\"]={until:t+6,reason:\"Goal check\"}),\"suspended\"===a&&e.slip.length&&(i[this.mkey(e.slip[0].id)]={until:1e9,reason:\"Market suspended\"}),e.autoHigher&&e.slip.length&&(o.slip=e.slip.map(e=>{const t=s[e.id]?s[e.id].v:e.taken;return t>e.taken?Object.assign({},e,{taken:t}):e})),e.toast&&t-e.toastAt>=3&&(o.toast=null),o.odds=s,o.susp=i,o})}say(e){this.setState({toast:e,toastAt:this.state.tick})}go(e,t){this.setState(Object.assign({page:e,sheet:!1,search:\"home\"===e?this.state.search:\"\"},t||{})),this._mainEl&&(this._mainEl.scrollTop=0)}openMatch(e,t){this.go(\"match\",{matchId:e,marketTab:t||\"popular\",search:\"\"})}toggleSel(e){const t=this.state;if(this.isSusp(this.mkey(e)))return;if(\"placing\"===t.status)return;if(t.slip.some(t=>t.id===e)){const a=Object.assign({},t.stakes);return delete a[e],void this.setState({slip:t.slip.filter(t=>t.id!==e),stakes:a})}const a=\"placed\"===t.status;let s=a?[]:t.slip;const i=a?{}:Object.assign({},t.stakes);if(s.length>=12)return void this.say(\"Your slip is full. 12 singles max.\");s=s.concat([this.entry(e,t.odds)]);const o={slip:s,stakes:i,status:\"idle\",slipTab:\"slip\",failReason:\"\"};this.isMob()&&(o.toast=\"Added to bet slip · \"+s.length+(1===s.length?\" selection\":\" selections\"),o.toastAt=t.tick),this.setState(o)}setStake(e,t){let a=String(t).replace(\",\",\".\").replace(/[^0-9.]/g,\"\");const s=a.split(\".\");s.length>2&&(a=s[0]+\".\"+s.slice(1).join(\"\"));const i=a.split(\".\");i[1]&&i[1].length>2&&(a=i[0]+\".\"+i[1].slice(0,2));const o=Object.assign({},this.state.stakes);o[e]=a,this.setState({stakes:o})}addStake(e,t){const a=this.state,s=a.slip.reduce((t,s)=>t+(s.id===e?0:parseFloat(a.stakes[s.id])||0),0);let i;i=\"max\"===t?Math.max(0,Math.floor(100*(a.balance-s))/100):(parseFloat(a.stakes[e])||0)+t;const o=Object.assign({},a.stakes);o[e]=this.f2(i),this.setState({stakes:o})}remove(e){const t=Object.assign({},this.state.stakes);delete t[e];const a=this.state.slip.filter(t=>t.id!==e);this.setState({slip:a,stakes:t,status:a.length?this.state.status:\"idle\"})}accept(){const e=this.state;this.setState({slip:e.slip.map(e=>Object.assign({},e,{taken:this.cur(e.id)})),status:\"idle\"})}removeSusp(){const e=this.state;this.setState({slip:e.slip.filter(e=>!this.isSusp(this.mkey(e.id))),status:\"idle\"})}place(){this.setState({status:\"placing\",failReason:\"\"}),clearTimeout(this._pt),this._pt=setTimeout(()=>{const e=this.state;if(this._failNext)return this._failNext=!1,void this.setState({status:\"failed\",failReason:\"We lost the connection before your bets were confirmed.\"});const t=e.slip.find(t=>this.isSusp(this.mkey(t.id),e));if(t)return void this.setState({status:\"failed\",failReason:t.label+\" (\"+t.market+\") was suspended while we were placing it.\"});if(e.slip.some(t=>this.cur(t.id,e)!==t.taken))return void this.setState({status:\"idle\"});const a=e.bets.length,s=e.slip.map((t,s)=>this.betFrom(t,parseFloat(e.stakes[t.id]),s,a)),i=s.reduce((e,t)=>e+t.stake,0);this.setState({status:\"placed\",receipt:s,bets:s.concat(e.bets),balance:Math.round(100*(e.balance-i))/100})},1400)}cashValue(e,t){const a=this.cur(e.selId,t);return Math.max(.1,Math.round(e.stake*e.odds/a*.94*100)/100)}cashOut(e){const t=this.state,a=t.bets.find(t=>t.id===e),s=this.cashValue(a,t);this.setState({bets:t.bets.map(t=>t.id===e?Object.assign({},t,{state:\"cashed\",ret:s}):t),balance:Math.round(100*(t.balance+s))/100,cashConfirm:null,toast:\"Cashed out \"+this.money(s),toastAt:t.tick})}follow(e){const t=this.state,a=this.D(),s=t.followed.includes(e);this.setState({followed:s?t.followed.filter(t=>t!==e):t.followed.concat([e]),toast:s?\"Unfollowed \"+a.T[e].disp:\"Following \"+a.T[e].disp+\". Pinned to Sports home.\",toastAt:t.tick})}followComp(e){const t=this.state,a=this.D(),s=t.followedComps.includes(e);this.setState({followedComps:s?t.followedComps.filter(t=>t!==e):t.followedComps.concat([e]),toast:s?\"Unfollowed \"+a.C[e].name:\"Following \"+a.C[e].name,toastAt:t.tick})}goSport(e){\"football\"===e?this.go(\"football\"):this.go(\"live\",{sport:e,liveComp:\"all\"})}goComp(e){const t=this.D().M.find(t=>t.comp===e);\"football\"===t.sport?this.go(\"football\",{fbComp:e}):this.go(\"live\",{sport:t.sport,liveComp:e})}shade(e,t){const a=parseInt(e.slice(1),16),s=e=>Math.max(0,Math.min(255,Math.round(e*t))).toString(16).padStart(2,\"0\");return\"#\"+s(a>>16&255)+s(a>>8&255)+s(255&a)}crest(e,t){const a=t||24,s=this.D().T[e].color,i=this.shade(s,.55),o=\"#f4f7f8\",n=\"linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 50%)\",l=\"font-family:Big Shoulders Display, Impact, sans-serif; font-weight:900; letter-spacing:.02em; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,.55)\";if([\"sinner\",\"alcaraz\",\"djokovic\",\"zverev\"].includes(e))return\"position:relative; width:\"+a+\"px; height:\"+a+\"px; flex:none; border-radius:50%; background-image:\"+n+\", linear-gradient(135deg, \"+s+\", \"+i+\"); display:flex; align-items:center; justify-content:center; font-size:\"+Math.round(.38*a)+\"px; \"+l+\"; box-shadow:inset 0 0 0 2px rgba(255,255,255,.2)\";let r=0;for(let t=0;t<e.length;t++)r=(31*r+e.charCodeAt(t))%997;const p=[\"linear-gradient(135deg, \"+s+\" 0 36%, \"+o+\" 36% 50%, \"+s+\" 50%)\",\"linear-gradient(90deg, \"+s+\" 0 50%, \"+i+\" 50%)\",\"repeating-linear-gradient(90deg, \"+s+\" 0 20%, \"+i+\" 20% 34%)\",\"linear-gradient(180deg, \"+s+\" 0 38%, \"+o+\" 38% 54%, \"+s+\" 54%)\",\"linear-gradient(160deg, \"+s+\" 0 58%, \"+i+\" 58%)\",\"radial-gradient(circle at 50% 42%, \"+s+\" 0 36%, \"+i+\" 37%)\"];return\"position:relative; width:\"+Math.round(.9*a)+\"px; height:\"+a+\"px; flex:none; clip-path:polygon(50% 0, 100% 10%, 100% 52%, 92% 74%, 50% 100%, 8% 74%, 0 52%, 0 10%); background-image:\"+n+\", \"+p[r%p.length]+\"; display:flex; align-items:center; justify-content:center; padding-bottom:\"+Math.round(.06*a)+\"px; box-sizing:border-box; font-size:\"+Math.round(.36*a)+\"px; \"+l}compBadge(e,t){const a=this.D().C[e],s=t||32;return\"position:relative; width:\"+s+\"px; height:\"+s+\"px; flex:none; border-radius:\"+Math.round(.22*s)+\"px; background:\"+a.color+\"; color:#ffffff; display:flex; align-items:center; justify-content:center; font-family:Big Shoulders Display, Impact, sans-serif; font-size:\"+Math.round(s*(a.ini.length>2?.34:.44))+\"px; font-weight:900\"}orb(e,t){const a=this.D().T[e].color;return\"position:absolute; width:70%; height:150%; top:-25%; \"+(\"l\"===t?\"left:-22%\":\"right:-22%\")+\"; background:radial-gradient(closest-side, \"+a+\"cc, \"+a+\"33 55%, transparent 75%); filter:blur(30px); opacity:.75; animation:hbGlow 6s ease-in-out infinite\"+(\"r\"===t?\" 3s\":\"\")+\"; pointer-events:none\"}split(e,t){const a=this.D().T;return\"position:absolute; inset:0; background-image:linear-gradient(105deg, \"+a[e].color+\"8c 0%, transparent 46%), linear-gradient(285deg, \"+a[t].color+\"8c 0%, transparent 46%)\"}cut(e){return\"clip-path:polygon(0 0, calc(100% - \"+e+\"px) 0, 100% \"+e+\"px, 100% 100%, \"+e+\"px 100%, 0 calc(100% - \"+e+\"px))\"}sv(e,t,a){const s=this.state,i=this.findSel(e),o=this.cur(e),n=s.odds[e],l=!!(n&&s.tick-n.t<3),r=l&&\"up\"===n.dir,p=l&&\"down\"===n.dir,d=s.slip.some(t=>t.id===e),c=this.isSusp(this.mkey(e));let h=\"#172a33\",m=\"#172a33\",f=\"#8a96a4\",g=\"#f2fbff\",u=\"#f2fbff\";r&&(m=\"#3ddc84\",g=\"#7ef0a8\"),p&&(m=\"#ff6b81\",g=\"#ffa1ad\"),d&&(h=\"#c3f4f1\",m=\"#c3f4f1\",f=\"#2a5a5e\",g=\"#0b1a21\",u=\"#0b1a21\"),c&&(h=\"#111f26\",m=\"#111f26\",f=\"#4c5b64\",g=\"#4c5b64\",u=\"#4c5b64\");const b=\"position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; width:100%; min-height:\"+(a?52:60)+\"px; padding:6px 10px; border-radius:6px; border:1px solid \"+m+\"; background:\"+h+\"; color:\"+u+\"; text-align:center; cursor:\"+(c?\"not-allowed\":\"pointer\")+\"; overflow:hidden; box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)\";return{id:e,label:t,odds:this.f2(o),up:r,down:p,locked:c,unlocked:!c,inSlip:d,arrow:r?\"▲ \":p?\"▼ \":\"\",aria:(c?\"Suspended: \":\"\")+i.market+\", \"+i.label+\", odds \"+this.f2(o)+(d?\", in bet slip\":\"\"),toggle:()=>this.toggleSel(e),style:b,labelStyle:\"max-width:100%; font-family:JetBrains Mono, monospace; font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:\"+f+\"; overflow:hidden; text-overflow:ellipsis; white-space:nowrap\",oddsStyle:\"display:inline-block; font-family:JetBrains Mono, monospace; font-size:\"+(a?15:17)+\"px; font-weight:700; color:\"+g+\"; white-space:nowrap\"+(l?\"; animation:hbRoll .45s ease-out\":\"\")}}side(e,t,a){const s=this.state,i=this.D().T[e],o=s.followed.includes(e);return{name:i.disp,full:i.name,code:i.code,color:i.color,crest:this.crest(e,a||26),crestL:this.crest(e,56),crestXL:this.crest(e,84),score:null==t?\"\":String(t),followed:o,starFill:o?\"#f8d466\":\"none\",starColor:o?\"#f8d466\":\"#56656f\",starLabel:(o?\"Unfollow \":\"Follow \")+i.name,follow:()=>this.follow(e),followText:o?\"Following\":\"Follow\",followBtn:\"display:flex; align-items:center; gap:6px; min-height:34px; padding:0 14px; border-radius:17px; border:1px solid \"+(o?\"rgba(248,212,102,.5)\":\"rgba(255,255,255,.14)\")+\"; background:\"+(o?\"rgba(248,212,102,.14)\":\"rgba(5,16,22,.55)\")+\"; color:\"+(o?\"#f8d466\":\"#e2ecf1\")+\"; font-family:Inter, sans-serif; font-size:12px; font-weight:700; cursor:pointer\"}}minText(e){return\"football\"!==e.sport?e.clock:e.ht?\"HT\":Math.floor((e.sec+this.state.tick)/60)+\"'\"}row(e){const t=this.D(),a=this.isLive(e),s=this.marketsFor(e.id)[0],i=3===s.cols?[t.T[e.h].disp,\"Draw\",t.T[e.a].disp]:[t.T[e.h].disp,t.T[e.a].disp],o=s.sels.map((t,a)=>this.sv(e.id+\":\"+s.k+\":\"+a,i[a],!0)),n=(e.ko||\"\").split(\" \"),l=!a&&e.mins&&e.mins<60,r=this.isSusp(e.id+\":\"+s.k);return{id:e.id,live:a,locked:r,gridStyle:\"display:\"+(r?\"none\":\"grid\")+\"; grid-template-columns:repeat(\"+s.cols+\", minmax(0,1fr)); gap:6px\",t1:a?this.minText(e):l?e.mins+\" min\":n[n.length-1],t2:a?e.period:l?\"Starts in\":n[0],t1Style:\"font-weight:800; font-size:13px; color:\"+(a?\"#ff9db0\":l?\"#f8d466\":\"#f2fbff\"),h:this.side(e.h,a?e.sh:null),a:this.side(e.a,a?e.sa:null),sels:o,grid:\"repeat(\"+s.cols+\", minmax(0,1fr))\",more:\"+\"+e.more,moreLabel:\"All \"+e.more+\" markets for \"+this.matchName(e.id),compLine:t.C[e.comp].name,open:()=>this.openMatch(e.id)}}pillStyle(e){return\"flex:none; display:flex; align-items:center; gap:8px; min-height:42px; padding:0 16px; border-radius:21px; border:1px solid \"+(e?\"#c3f4f1\":\"#233036\")+\"; background:\"+(e?\"#c3f4f1\":\"#0d1f29\")+\"; color:\"+(e?\"#0b1a21\":\"#d6e1e8\")+\"; font-family:Inter, sans-serif; font-size:14px; font-weight:\"+(e?800:600)+\"; cursor:pointer; white-space:nowrap\"}countPill(e,t){return\"font-family:JetBrains Mono, monospace; font-size:11px; font-weight:800; padding:1px 7px; border-radius:4px; background:\"+(e?\"#0b1a21\":\"#13242c\")+\"; color:\"+(t?\"#ff9db0\":e?\"#c3f4f1\":\"#b8c4cc\")}underTab(e){return\"flex:none; display:flex; align-items:center; gap:8px; min-height:50px; padding:0 16px; border:0; border-bottom:2px solid \"+(e?\"#c3f4f1\":\"transparent\")+\"; margin-bottom:-1px; background:transparent; color:\"+(e?\"#f2fbff\":\"#8a96a4\")+\"; font-family:JetBrains Mono, monospace; font-size:12px; font-weight:\"+(e?800:600)+\"; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; white-space:nowrap\"}searchResults(e){const t=this.D(),a=e=>e.normalize(\"NFD\").replace(/[̀-ͯ]/g,\"\").toLowerCase(),s=a(e.trim());if(!s)return[];const i=[],o=[];Object.keys(t.T).forEach(e=>{const i=t.T[e];if(a(i.name).includes(s)||a(i.disp).includes(s)||a(i.code)===s){const a=t.M.find(t=>t.h===e||t.a===e);a&&o.push({title:i.name,sub:(this.isLive(a)?\"Live now · \":a.ko+\" · \")+this.matchName(a.id),ini:i.code,badge:this.crest(e,34),go:()=>this.openMatch(a.id)})}}),o.length&&i.push({title:\"Teams\",items:o.slice(0,4)});const n=[];Object.keys(t.P).forEach(e=>t.P[e].forEach(i=>{if(a(i).includes(s)){const a=t.M.find(t=>t.h===e||t.a===e);n.push({title:i,sub:t.T[e].disp+\" · goalscorer markets\",ini:i.split(\" \").map(e=>e[0]).join(\"\").slice(0,2),badge:this.crest(e,34),go:()=>this.openMatch(a.id,\"goalscorers\")})}})),n.length&&i.push({title:\"Players\",items:n.slice(0,4)});const l=[];Object.keys(t.C).forEach(e=>{const i=t.C[e];(a(i.name).includes(s)||a(i.country).includes(s))&&l.push({title:i.name,sub:i.country+\" · \"+t.M.filter(t=>t.comp===e).length+\" matches\",ini:i.ini,badge:this.compBadge(e,34),go:()=>this.goComp(e)})}),l.length&&i.push({title:\"Competitions\",items:l.slice(0,4)});const r=[[\"Match result\",\"popular\"],[\"Both teams to score\",\"goals\"],[\"Total goals\",\"goals\"],[\"Next goal\",\"goals\"],[\"Double chance\",\"popular\"],[\"Asian handicap\",\"handicaps\"],[\"European handicap\",\"handicaps\"],[\"Anytime goalscorer\",\"goalscorers\"],[\"Total corners\",\"corners\"],[\"Total cards\",\"corners\"],[\"2nd half result\",\"halves\"]].filter(e=>a(e[0]).includes(s)||s.length>3&&a(e[1]).includes(s)).map(e=>({title:e[0],sub:\"Arsenal v Brighton · live\",ini:\"%\",badge:\"width:34px; height:34px; flex:none; border-radius:8px; background:#13394c; color:#c3f4f1; display:flex; align-items:center; justify-content:center; font-family:JetBrains Mono, monospace; font-size:14px; font-weight:800\",go:()=>this.openMatch(\"m1\",e[1])}));return r.length&&i.push({title:\"Markets\",items:r.slice(0,4)}),i}renderVals(){const e=this.state,t=this.D(),a=this.isMob(),s=t.M.filter(e=>this.isLive(e)),i=t.M.filter(e=>!this.isLive(e)).sort((e,t)=>e.mins-t.mins),o={all:s.length},n={};t.SP.forEach(e=>{o[e.id]=s.filter(t=>t.sport===e.id).length,n[e.id]=t.M.filter(t=>t.sport===e.id).length});const l=i.length?i[0].ko.replace(\"Today \",\"\"):\"soon\",r=\"font-family:Big Shoulders Display, Impact, sans-serif; text-transform:uppercase; font-weight:900\",p=\"font-family:JetBrains Mono, monospace\",d={rowStyle:a?\"display:grid; grid-template-columns:54px minmax(0,1fr) 52px; align-items:center; gap:10px; padding:12px; border-top:1px solid #1a2b33\":\"display:grid; grid-template-columns:72px minmax(0,1fr) 300px 60px; align-items:center; gap:16px; padding:12px 16px; border-top:1px solid #1a2b33\",headRow:a?\"padding:12px; background:#10232d\":\"display:grid; grid-template-columns:72px minmax(0,1fr) 300px 60px; align-items:center; gap:16px; padding:10px 16px; background:#10232d\",oddsBox:a?\"grid-column:1 / -1; order:4\":\"\",moreStyle:(a?\"order:3; \":\"\")+\"min-height:44px; min-width:44px; border-radius:4px; border:1px solid #233036; background:transparent; color:#d6e1e8; \"+p+\"; font-size:12px; font-weight:700; cursor:pointer\",teamName:\"flex:1; \"+r+\"; font-size:\"+(a?19:20)+\"px; line-height:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap\",suspBar:\"display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; border-radius:8px; border:1px solid #3a2a17; background:repeating-linear-gradient(-45deg, #151f22 0 8px, #172327 8px 16px); color:#f5a54a; font-family:Inter, sans-serif; font-size:14px; font-weight:700\",livePill:\"align-self:flex-start; font-family:Inter, sans-serif; font-size:10px; font-weight:800; letter-spacing:.06em; color:#ffffff; background:#df1646; padding:2px 6px; border-radius:4px; margin-bottom:2px\",score:r+\"; font-size:22px; line-height:1\"},c=e.navOpen,h=e=>\"position:relative; display:flex; align-items:center; gap:12px; width:100%; min-height:44px; padding:0 \"+(c?12:0)+\"px; justify-content:\"+(c?\"flex-start\":\"center\")+\"; border:0; border-radius:8px; background:\"+(e?\"#13394c\":\"transparent\")+\"; color:\"+(e?\"#ffffff\":\"#c4d0d8\")+\"; font-family:Inter, sans-serif; font-size:14px; font-weight:\"+(e?700:500)+\"; cursor:pointer; text-align:left; box-shadow:\"+(e?\"inset 3px 0 0 #c3f4f1\":\"none\"),m=t=>\"live\"===e.page&&e.sport===t,f=\"match\"===e.page?this.match(e.matchId).sport:null,g={home:h(\"home\"===e.page),live:h(\"live\"===e.page&&\"all\"===e.sport),footballTop:h(!1),football:h(\"football\"===e.page||\"football\"===f),tennis:h(m(\"tennis\")||\"tennis\"===f),basketball:h(m(\"basketball\")||\"basketball\"===f),icehockey:h(m(\"icehockey\")||\"icehockey\"===f),esports:h(m(\"esports\")||\"esports\"===f),plain:h(!1)},u={};t.SP.forEach(e=>{return u[e.id]=(t=o[e.id],p+\"; font-size:11px; font-weight:800; border-radius:5px; padding:2px 7px; \"+(t>0?\"color:#ff9db0; background:#2a1620\":\"color:#56656f; background:transparent\"));var t});const b=[\"pl\",\"ucl\",\"laliga\",\"seriea\",\"bundesliga\",\"nba\"].map(a=>({name:t.C[a].name,ini:t.C[a].ini,badge:this.compBadge(a,26),style:h(\"football\"===e.page&&e.fbComp===a||\"live\"===e.page&&e.liveComp===a).replace(\"min-height:44px\",\"min-height:40px\"),go:()=>this.goComp(a)})),x=e.followed.map(e=>{const a=t.M.find(t=>t.h===e||t.a===e);return{name:t.T[e].disp,code:t.T[e].code,crest:this.crest(e,24),go:()=>a&&this.openMatch(a.id)}}).concat(e.followedComps.map(e=>({name:t.C[e].name,code:t.C[e].ini,crest:this.compBadge(e,24),go:()=>this.goComp(e)}))),k=s.map(e=>({clock:this.minText(e),h:t.T[e.h].code,a:t.T[e.a].code,hc:t.T[e.h].color,ac:t.T[e.a].color,score:e.sh+\"-\"+e.sa,open:()=>this.openMatch(e.id)})),v=k.concat(k),y=p+\"; font-size:12px; font-weight:700; letter-spacing:.08em; color:#c3f4f1; padding-bottom:\"+(a?4:6)+\"px\",w=\"margin:0; \"+r+\"; font-size:\"+(a?26:32)+\"px; line-height:1; letter-spacing:.01em\",S=\"margin:0; \"+r+\"; font-size:\"+(a?36:44)+\"px; line-height:1\",T=p+\"; font-size:13px; color:#8a96a4; padding-bottom:\"+(a?3:5)+\"px\",C=this.match(\"m1\"),M=this.isLive(C)?C:null,B=this.marketsFor(\"m1\").find(e=>\"next\"===e.k),L=M?{clock:this.minText(M),comp:t.C[M.comp].name,period:M.period,more:M.more,h:this.side(M.h,M.sh),a:this.side(M.a,M.sa),markets:[{name:\"Match result\",sels:this.marketsFor(\"m1\")[0].sels.map((e,t)=>this.sv(\"m1:mr:\"+t,e.label,!0))}].concat(B?[{name:B.name,sels:B.sels.map((e,t)=>this.sv(\"m1:next:\"+t,e.label,!0))}]:[]),boxStyle:\"position:relative; overflow:hidden; background:#0d1f29; padding:\"+(a?\"18px 16px\":\"26px 30px\")+\"; display:flex; flex-direction:column; gap:\"+(a?16:22)+\"px; \"+this.cut(a?16:24),split:this.split(M.h,M.a),orbH:this.orb(M.h,\"l\"),orbA:this.orb(M.a,\"r\"),gap:a?\"10px\":\"20px\",mGrid:\"position:relative; display:grid; grid-template-columns:\"+(a?\"1fr\":\"1fr 1fr\")+\"; gap:\"+(a?14:20)+\"px\",open:()=>this.openMatch(\"m1\")}:{h:{},a:{},markets:[]},I=s.filter(e=>\"football\"===e.sport).concat(s.filter(e=>\"football\"!==e.sport)).slice(0,a?6:8).map(e=>{const a=this.marketsFor(e.id)[0],s=3===a.cols?[t.T[e.h].disp,\"Draw\",t.T[e.a].disp]:[t.T[e.h].disp,t.T[e.a].disp],i=this.isSusp(e.id+\":\"+a.k);return{locked:i,gridStyle:\"display:\"+(i?\"none\":\"grid\")+\"; grid-template-columns:repeat(\"+a.cols+\", minmax(0,1fr)); gap:6px\",clock:this.minText(e),comp:t.C[e.comp].name,hc:t.T[e.h].color,ac:t.T[e.a].color,glow:\"position:absolute; inset:0; pointer-events:none; background:radial-gradient(60% 55% at 0% 0%, \"+t.T[e.h].color+\"14, transparent 70%), radial-gradient(60% 55% at 100% 0%, \"+t.T[e.a].color+\"14, transparent 70%)\",h:this.side(e.h,e.sh),a:this.side(e.a,e.sa),grid:\"repeat(\"+a.cols+\", minmax(0,1fr))\",mName:a.name,more:e.more,sels:a.sels.map((t,i)=>this.sv(e.id+\":\"+a.k+\":\"+i,s[i],!0)),open:()=>this.openMatch(e.id)}}),N=i.filter(e=>e.mins<200),z=N.slice(0,6).map(e=>this.row(e)),A=[\"pl\",\"ucl\",\"laliga\",\"seriea\",\"bundesliga\",\"nba\",\"atp\",\"nhl\"].map(e=>{const a=s.filter(t=>t.comp===e).length;return{name:t.C[e].name,ini:t.C[e].ini,badge:this.compBadge(e,42),glow:\"position:absolute; inset:0; background-image:linear-gradient(110deg, \"+t.C[e].color+\"55 0%, transparent 55%)\",sub:a?a+\" live now\":t.M.filter(t=>t.comp===e).length+\" matches\",subColor:a?\"#ff9db0\":\"#8a96a4\",go:()=>this.goComp(e)}}),O=e.followed.map(e=>{const a=t.M.find(t=>t.h===e||t.a===e),s=a&&this.isLive(a),i=a?t.T[a.h===e?a.a:a.h].disp:\"\";return{name:t.T[e].disp,code:t.T[e].code,crest:this.crest(e,34),next:a?s?\"Live, \"+a.sh+\"–\"+a.sa+\" v \"+i:a.ko+\" v \"+i:\"No upcoming match\",nextColor:s?\"#ff9db0\":\"#8a96a4\",go:()=>a&&this.openMatch(a.id),remove:()=>this.follow(e),removeLabel:\"Unfollow \"+t.T[e].name}}),F=this.searchResults(e.search),D=[[\"live\",\"In play\"],[\"football\",\"Football\"],[\"basketball\",\"Basketball\"],[\"tennis\",\"Tennis\"],[\"icehockey\",\"Ice hockey\"],[\"esports\",\"Esports\"]].map(e=>{const t=\"live\"===e[0]?o.all:o[e[0]],a=\"live\"===e[0];return{name:e[1],isLive:a,isFootball:\"football\"===e[0],isBasketball:\"basketball\"===e[0],isTennis:\"tennis\"===e[0],isHockey:\"icehockey\"===e[0],isEsports:\"esports\"===e[0],hasBadge:t>0,badge:t,aria:e[1]+(t>0?\", \"+t+\" live\":\"\"),well:\"position:relative; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center; background:\"+(a?\"#2a1620\":\"#13252f\")+\"; color:\"+(a?\"#ff8aa2\":\"#c3f4f1\")+\"; box-shadow:inset 0 0 0 1px \"+(a?\"rgba(255,107,132,.25)\":\"rgba(255,255,255,.06)\"),go:()=>a?this.go(\"live\",{sport:\"all\",liveComp:\"all\"}):this.goSport(e[0])}}),E=[{id:\"all\",name:\"All sports\"}].concat(t.SP).map(t=>{const a=\"all\"===t.id?o.all:o[t.id];return{name:t.name,count:a,active:e.sport===t.id,style:this.pillStyle(e.sport===t.id),countStyle:this.countPill(e.sport===t.id,a>0),go:()=>this.setState({sport:t.id,liveComp:\"all\"})}}),H=s.filter(t=>\"all\"===e.sport||t.sport===e.sport),j=Array.from(new Set(H.map(e=>e.comp))),P=j.length>1?[{id:\"all\",name:\"All competitions\"}].concat(j.map(e=>({id:e,name:t.C[e].name}))).map(t=>({name:t.name,active:e.liveComp===t.id,style:this.pillStyle(e.liveComp===t.id).replace(\"border-radius:21px\",\"border-radius:4px\").replace(\"min-height:42px\",\"min-height:38px\"),go:()=>this.setState({liveComp:t.id})})):[],R=H.filter(t=>\"all\"===e.liveComp||t.comp===e.liveComp),U=Array.from(new Set(R.map(e=>e.comp))).map(e=>{const a=R.filter(t=>t.comp===e).map(e=>this.row(e));return{name:t.C[e].name,country:t.C[e].country,ini:t.C[e].ini,badge:this.compBadge(e,34),count:a.length,rows:a}}),G=(t.SP.find(t=>t.id===e.sport)||{name:\"\"}).name.toLowerCase(),_=0===R.length,V=i.filter(t=>\"all\"===e.sport||t.sport===e.sport).slice(0,5).map(e=>this.row(e)),W=[\"pl\",\"ucl\",\"laliga\",\"seriea\",\"bundesliga\"].map(a=>({name:t.C[a].name,ini:t.C[a].ini,badge:this.compBadge(a,22),active:e.fbComp===a,style:this.underTab(e.fbComp===a),go:()=>this.setState({fbComp:a})})),J=t.M.filter(t=>t.comp===e.fbComp),K=e.followedComps.includes(e.fbComp),Y={name:t.C[e.fbComp].name,country:t.C[e.fbComp].country,ini:t.C[e.fbComp].ini,badgeL:this.compBadge(e.fbComp,60),count:J.length,liveCount:J.filter(e=>this.isLive(e)).length,followed:K,starFill:K?\"#f8d466\":\"none\",followText:K?\"Following\":\"Follow competition\",box:\"position:relative; overflow:hidden; display:flex; align-items:center; gap:16px; padding:\"+(a?\"18px 16px\":\"22px 24px\")+\"; background:#0d1f29; flex-wrap:wrap; \"+this.cut(18),glow:\"position:absolute; inset:0; background-image:linear-gradient(105deg, \"+t.C[e.fbComp].color+\"b3 0%, transparent 60%)\",followStyle:\"position:relative; display:flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:22px; border:1px solid \"+(K?\"rgba(248,212,102,.5)\":\"rgba(255,255,255,.16)\")+\"; background:\"+(K?\"rgba(248,212,102,.14)\":\"rgba(5,16,22,.55)\")+\"; color:\"+(K?\"#f8d466\":\"#f2fbff\")+\"; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:pointer\",follow:()=>this.followComp(e.fbComp)},Z=[{title:\"Live\",color:\"#ff9db0\",rows:J.filter(e=>this.isLive(e)).map(e=>this.row(e))},{title:\"Today\",color:\"#c3f4f1\",rows:J.filter(e=>!this.isLive(e)&&(e.ko||\"\").startsWith(\"Today\")).map(e=>this.row(e))},{title:\"Tomorrow\",color:\"#b8c4cc\",rows:J.filter(e=>!this.isLive(e)&&(e.ko||\"\").startsWith(\"Tomorrow\")).map(e=>this.row(e))}].filter(e=>e.rows.length),Q=this.match(e.matchId),X=this.isLive(Q),q=this.marketsFor(Q.id),$=\"football\"===Q.sport?[[\"popular\",\"Popular\"],[\"goals\",\"Goals\"],[\"halves\",\"Halves\"],[\"handicaps\",\"Handicaps\"],[\"goalscorers\",\"Goalscorers\"],[\"corners\",\"Corners & cards\"]]:[[\"popular\",\"All markets\"]],ee=$.some(t=>t[0]===e.marketTab)?e.marketTab:\"popular\",te=q.filter(e=>e.g.includes(ee)),ae=Q.sec+e.tick,se={comp:t.C[Q.comp].name,compIni:t.C[Q.comp].ini,compBadge:this.compBadge(Q.comp,28),live:X,notLive:!X,boxStyle:\"position:relative; overflow:hidden; background:#0d1f29; padding:\"+(a?\"16px 14px 20px\":\"22px 28px 28px\")+\"; display:flex; flex-direction:column; gap:\"+(a?14:18)+\"px; \"+this.cut(a?16:24),split:this.split(Q.h,Q.a),orbH:this.orb(Q.h,\"l\"),orbA:this.orb(Q.a,\"r\"),h:this.side(Q.h,Q.sh),a:this.side(Q.a,Q.sa),clock:\"football\"===Q.sport?Q.ht?\"HT\":Math.floor(ae/60)+\":\"+String(ae%60).padStart(2,\"0\"):Q.clock,period:Q.period,koTime:(Q.ko||\"\").split(\" \").pop(),koDay:(Q.ko||\"\").split(\" \")[0],events:(X&&Q.events?Q.events:[]).map(e=>({min:e.min,text:e.text,dot:\"width:8px; height:10px; border-radius:2px; background:\"+e.c})),tabs:$.map(e=>{const t=q.filter(t=>t.g.includes(e[0])).length;return{name:e[1],count:t,active:ee===e[0],style:this.underTab(ee===e[0]),countStyle:p+\"; font-size:10px; font-weight:800; padding:1px 6px; border-radius:3px; background:\"+(ee===e[0]?\"#c3f4f1\":\"#13242c\")+\"; color:\"+(ee===e[0]?\"#0b1a21\":\"#b8c4cc\"),go:()=>this.setState({marketTab:e[0]})}}),markets:te.map(t=>{const s=Q.id+\":\"+t.k,i=this.isSusp(s),o=!e.collapsed[s],n=e.slip.some(e=>this.mkey(e.id)===s),l=a&&3===t.cols&&t.sels[0].label.length>12?1:t.cols,r=t.sels.length%2==0&&t.sels.every((e,t)=>t%2==0?/^Over /.test(e.label):/^Under /.test(e.label));return{name:t.name,locked:i,lockReason:i?e.susp[s].reason:\"\",open:o,inSlipBadge:n,border:i?\"#5a4c1a\":n?\"#2b6a6f\":\"#1c2e37\",grid:\"repeat(\"+l+\", minmax(0,1fr))\",gridStyle:\"padding:0 16px 16px; display:\"+(i||r?\"none\":\"grid\")+\"; grid-template-columns:repeat(\"+l+\", minmax(0,1fr)); gap:8px\",showLine:r&&!i,lineGrid:\"padding:0 16px 16px; display:grid; grid-template-columns:minmax(0,1fr) \"+(a?\"96px 96px\":\"150px 150px\")+\"; gap:8px; align-items:center\",rows:r?t.sels.filter((e,t)=>t%2==0).map((e,a)=>({line:e.label.replace(/^Over /,\"\"),over:this.sv(s+\":\"+2*a,e.label,!0),under:this.sv(s+\":\"+(2*a+1),t.sels[2*a+1].label,!0)})):[],chev:\"transform:rotate(\"+(o?180:0)+\"deg); transition:transform .2s\",toggle:()=>{const e=Object.assign({},this.state.collapsed);e[s]=o,this.setState({collapsed:e})},sels:t.sels.map((e,t)=>this.sv(s+\":\"+t,e.label,!1))}}),tabEmpty:0===te.length,emptyTitle:\"goalscorers\"===ee?\"Goalscorers open soon\":\"No markets in this group\",emptySub:\"goalscorers\"===ee?\"They open about an hour before kick-off, once line-ups are in.\":\"Try Popular for the main markets.\"};se.hasEvents=se.events.length>0;let ie=[];if(\"live\"===e.page&&(ie=[{name:\"Live\",go:()=>this.go(\"live\",{sport:\"all\"})}]),\"football\"===e.page&&(ie=[{name:\"Football\",go:()=>this.go(\"football\")},{name:t.C[e.fbComp].name,go:()=>{}}]),\"match\"===e.page){ie=[{name:t.SP.find(e=>e.id===Q.sport).name,go:()=>this.goSport(Q.sport)},{name:t.C[Q.comp].name,go:()=>this.goComp(Q.comp)}]}const oe=ie.length;ie=ie.map((e,t)=>Object.assign(e,{style:\"border:0; background:transparent; padding:6px 0; color:\"+(t===oe-1?\"#f2fbff\":\"#8a96a4\")+\"; font-family:inherit; font-size:12px; font-weight:\"+(t===oe-1?700:500)+\"; cursor:pointer\"}));const ne=e.slip.map(t=>{const a=this.cur(t.id),s=a!==t.taken,i=this.isSusp(this.mkey(t.id)),o=e.stakes[t.id]||\"\",n=parseFloat(o)||0,l=\"\"!==o&&n>0&&n<.1?\"Minimum stake is 0.10 USDT\":\"\",r=this.match(t.matchId),p=this.isLive(r),d=i?\"#56656f\":s?\"#f8d466\":\"#c3f4f1\";return{id:t.id,label:t.label,market:t.market,live:p,matchLine:this.matchName(t.matchId)+(p?\" · \"+this.minText(r)+\" · \"+r.sh+\"-\"+r.sa:\" · \"+(r.ko||\"\")),oddsText:this.f2(a),oldOdds:this.f2(t.taken),changed:s,locked:i,unlocked:!i,arrow:s?a>t.taken?\"▲ \":\"▼ \":\"\",oddsColor:s?a>t.taken?\"#7ef0a8\":\"#ffa1ad\":\"#f2fbff\",labelColor:i?\"#8a96a4\":\"#f2fbff\",accent:\"position:absolute; left:0; top:0; bottom:0; width:3px; background:\"+d,cardStyle:\"position:relative; overflow:hidden; display:flex; flex-direction:column; gap:10px; padding:14px 14px 14px 16px; border-radius:6px; background:\"+(i?\"#0f1d24\":\"#0d1f29\")+\"; border:1px solid \"+(s&&!i?\"#6b5a1f\":i?\"#2d4250\":\"#1c2e37\")+\"; animation:hbIn .3s ease-out\",stake:o,onStake:e=>this.setStake(t.id,e.target.value),retText:this.f2(n*(s?a:t.taken)),inputBorder:l?\"#ff7a8a\":o?\"#2b6a6f\":\"#233036\",err:l,hasErr:!!l,chips:[[\"5\",5],[\"10\",10],[\"25\",25],[\"Max\",\"max\"]].map(e=>({label:e[0],go:()=>this.addStake(t.id,e[1])})),remove:()=>this.remove(t.id),removeLabel:\"Remove \"+t.label+\" from bet slip\"}}),le=e.slip.filter(e=>!this.isSusp(this.mkey(e.id))),re=le.reduce((t,a)=>t+(parseFloat(e.stakes[a.id])||0),0),pe=le.reduce((t,a)=>t+(parseFloat(e.stakes[a.id])||0)*a.taken,0),de=ne.filter(e=>e.changed&&!e.locked).length,ce=ne.filter(e=>e.locked).length,he=le.filter(t=>(parseFloat(e.stakes[t.id])||0)>0).length,me=ne.some(e=>e.hasErr);let fe=\"\",ge=()=>{},ue=!1,be=\"primary\";\"placing\"===e.status?(fe=he>1?\"Placing \"+he+\" bets\":\"Placing bet\",ue=!0,be=\"busy\"):de?(fe=\"Accept new odds\",ge=()=>this.accept(),be=\"warn\"):ce&&0===le.length?(fe=\"Selection suspended\",ue=!0):ce?(fe=\"Remove suspended\",ue=!0):re<=0?(fe=\"Enter a stake\",ue=!0):me?(fe=\"Check your stakes\",ue=!0):re>e.balance?(fe=\"Not enough balance\",ge=()=>this.say(\"Wallet opens here in the full product.\"),be=\"ghost\"):(fe=(\"failed\"===e.status?\"Try again · \":\"Place \"+(he>1?he+\" bets\":\"bet\")+\" · \")+this.f2(re),ge=()=>this.place());const xe=ue&&\"busy\"!==be?\"#16262f\":\"warn\"===be?\"#f8d466\":\"ghost\"===be?\"#13242c\":\"#c3f4f1\",ke=ue&&\"busy\"!==be?\"#8a96a4\":\"ghost\"===be?\"#f2fbff\":\"#0b1a21\",ve=[\"m1:mr:0\",\"m2:btts:0\",\"m6:mr:0\"].map(e=>{const t=this.findSel(e);return{label:t.label+\" · \"+t.market,sub:this.matchName(t.matchId),odds:this.f2(this.cur(e)),locked:this.isSusp(this.mkey(e)),add:()=>this.toggleSel(e)}}),ye=\"placed\"===e.status,we=e.receipt.reduce((e,t)=>e+t.stake,0),Se={count:e.slip.length,empty:0===e.slip.length&&!ye,isPlaced:ye,showItems:e.slip.length>0&&!ye,showFooter:e.slip.length>0&&!ye,isFailed:\"failed\"===e.status,failReason:e.failReason,anyChanged:de>0,changedTitle:de>1?\"Odds changed on \"+de:\"Odds changed\",anySusp:ce>0,suspTitle:ce>1?ce+\" selections suspended\":\"Selection suspended\",items:ne,picks:ve,totalText:this.money(re),retText:this.money(pe),cta:fe,ctaGo:ge,ctaDisabled:ue,placing:\"placing\"===e.status,ctaClass:\"hb-cta\"+(ue&&\"busy\"!==be?\"\":\"warn\"===be?\" hb-gloss hb-gold\":\"ghost\"===be?\"\":\" hb-gloss\"),ctaStyle:\"display:flex; align-items:center; justify-content:center; gap:10px; min-height:58px; border:0; background:\"+xe+\"; color:\"+ke+\"; font-family:Big Shoulders Display, Impact, sans-serif; font-size:24px; font-weight:900; text-transform:uppercase; letter-spacing:.02em; cursor:\"+(ue?\"not-allowed\":\"pointer\")+\"; \"+this.cut(14),placedTitle:e.receipt.length>1?e.receipt.length+\" bets placed\":\"Bet placed\",placedSub:this.money(we)+\" staked · balance \"+this.money(e.balance),receipt:e.receipt.map(e=>({id:e.id,label:e.label,market:e.market,matchName:this.matchName(e.matchId),oddsText:this.f2(e.odds),stakeText:this.f2(e.stake),retText:this.f2(e.stake*e.odds),placed:e.placed}))},Te=e.bets.filter(e=>\"open\"===e.state),Ce=e.bets.filter(e=>\"open\"!==e.state),Me={won:[\"Won\",\"#0f3b2b\",\"#7ef0a8\"],lost:[\"Lost\",\"#2c1218\",\"#ffa1ad\"],cashed:[\"Cashed out\",\"#13394c\",\"#c3f4f1\"],void:[\"Void\",\"#1a2b33\",\"#b8c4cc\"]},Be=e=>\"min-height:40px; border-radius:6px; border:0; background:\"+(e?\"#13394c\":\"transparent\")+\"; color:\"+(e?\"#ffffff\":\"#b8c4cc\")+\"; font-family:Inter, sans-serif; font-size:14px; font-weight:\"+(e?700:500)+\"; cursor:pointer\",Le={isOpen:\"open\"===e.betsTab,isSettled:\"settled\"===e.betsTab,openCount:Te.length,settledCount:Ce.length,openStyle:Be(\"open\"===e.betsTab),settledStyle:Be(\"settled\"===e.betsTab),showOpen:()=>this.setState({betsTab:\"open\"}),showSettled:()=>this.setState({betsTab:\"settled\"}),noOpen:0===Te.length,open:Te.map(t=>{const a=this.match(t.matchId),s=this.isLive(a),i=this.isSusp(this.mkey(t.selId)),o=this.cashValue(t,e),n=e.cashConfirm===t.id,l=o>=t.stake;return{id:t.id,label:t.label,market:t.market,live:s,matchLine:this.matchName(t.matchId)+(s?\" · \"+this.minText(a)+\" · \"+a.sh+\"-\"+a.sa:\"\"),oddsText:this.f2(t.odds),stakeText:this.f2(t.stake),retText:this.f2(t.stake*t.odds),placed:t.placed,border:n?\"#2b6a6f\":\"#1c2e37\",bar:s?\"#ff6b84\":\"#c3f4f1\",idle:!n,confirming:n,noCash:i,cashValue:this.money(o),cashText:i?\"Cash out unavailable · suspended\":\"Cash out \"+this.f2(o)+\" USDT \"+(l?\"▲\":\"▼\"),cashStyle:\"min-height:46px; border-radius:6px; border:1px solid \"+(i?\"#1a2b33\":\"#2b6a6f\")+\"; background:\"+(i?\"#0f1d24\":\"#0f2f33\")+\"; color:\"+(i?\"#8a96a4\":\"#c3f4f1\")+\"; font-family:Inter, sans-serif; font-size:14px; font-weight:700; cursor:\"+(i?\"not-allowed\":\"pointer\"),ask:()=>this.setState({cashConfirm:t.id}),cancel:()=>this.setState({cashConfirm:null}),confirm:()=>this.cashOut(t.id)}}),settled:Ce.map(e=>{const t=Me[e.state];return{id:e.id,label:e.label,market:e.market,matchName:e.matchName||this.matchName(e.matchId),placed:e.placed,oddsText:this.f2(e.odds),stakeText:this.f2(e.stake),retText:this.f2(e.ret||0),retColor:\"won\"===e.state?\"#7ef0a8\":\"lost\"===e.state?\"#8a96a4\":\"#f2fbff\",bar:t[2],badge:t[0],badgeStyle:\"font-family:Inter, sans-serif; font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; background:\"+t[1]+\"; color:\"+t[2]}})},Ie=\"slip\"===e.slipTab,Ne=\"mybets\"===e.slipTab,ze=e=>\"display:flex; align-items:center; justify-content:center; gap:8px; min-height:56px; border:0; border-bottom:2px solid \"+(e?\"#c3f4f1\":\"transparent\")+\"; margin-bottom:-1px; background:transparent; color:\"+(e?\"#ffffff\":\"#8a96a4\")+\"; font-family:Big Shoulders Display, Impact, sans-serif; font-size:22px; font-weight:900; text-transform:uppercase; cursor:pointer\",Ae=e=>\"font-family:Inter, sans-serif; min-width:20px; height:20px; padding:0 6px; border-radius:10px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; background:\"+(e?\"#c3f4f1\":\"#1a2b33\")+\"; color:\"+(e?\"#0b1a21\":\"#b8c4cc\"),Oe=e=>\"flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:58px; border:0; background:transparent; color:\"+(e?\"#c3f4f1\":\"#8a96a4\")+\"; font-family:Inter, sans-serif; font-size:11px; font-weight:600; cursor:pointer; box-shadow:\"+(e?\"inset 0 2px 0 #c3f4f1\":\"none\");return{rootStyle:\"position:relative; display:flex; flex-direction:column; width:100%; height:\"+(!0===this.props.mobile?\"844px\":\"100dvh\")+\"; background:#0b1a21; color:#f2fbff; font-family:Inter, system-ui, sans-serif; overflow:hidden; font-variant-numeric:tabular-nums\",topStyle:\"flex:none; position:relative; z-index:3; height:\"+(a?60:64)+\"px; display:flex; align-items:center; gap:\"+(a?8:12)+\"px; padding:0 \"+(a?12:18)+\"px; background:#0b1a21; border-bottom:1px solid #1a2b33\",isMobile:a,isDesktop:!a,showPrize:!a&&e.vw>1320,navOpen:c,balanceText:e.balance.toFixed(2),balanceWhole:Math.floor(e.balance).toLocaleString(\"en-US\"),balanceCents:e.balance.toFixed(2).split(\".\")[1],navStyle:\"flex:none; width:\"+(c?236:72)+\"px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding:12px 10px 24px; background:#0b1a21; border-right:1px solid #1a2b33; transition:width .2s\",navHead:\"display:block; padding:20px 12px 6px; font-size:12px; font-weight:600; color:#7d8b96\",nv:g,nb:u,navComps:b,navFollow:x,noFollow:0===x.length,slipHasItems:e.slip.length>0,cnt:o,cntAll:n,ticker:v,hasTicker:k.length>0,tickerEmpty:0===k.length,nextKo:l,tickerStyle:\"display:flex; width:max-content; animation:hbTicker \"+Math.max(20,5*k.length)+\"s linear infinite\",pageWrap:\"max-width:1080px; margin:0 auto; padding:\"+(a?\"14px 14px 28px\":\"20px 28px 32px\")+\"; display:flex; flex-direction:column; gap:16px\",gapL:a?\"28px\":\"36px\",showCrumb:\"home\"!==e.page,crumbs:ie,pHome:\"home\"===e.page,pLive:\"live\"===e.page,pFootball:\"football\"===e.page,pMatch:\"match\"===e.page,secHead:\"display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap\",secIdx:y,secTitle:w,secCount:T,secLink:\"min-height:36px; padding:0; border:0; background:transparent; color:#c3f4f1; font-family:Inter, sans-serif; font-size:14px; font-weight:600; cursor:pointer\",pageTitle:S,search:e.search,searching:e.search.trim().length>0,results:F,noResults:e.search.trim().length>0&&0===F.length,searchBorder:e.search?\"#2b6a6f\":\"#233036\",onSearch:e=>this.setState({search:e.target.value}),clearSearch:()=>this.setState({search:\"\"}),searchRef:e=>{this._searchEl=e},sportStrip:\"display:flex; gap:\"+(a?4:12)+\"px; overflow-x:auto; padding:4px 2px 6px; margin:0 -2px; scrollbar-width:none\",stripItemW:a?\"76px\":\"92px\",sportTiles:D,tileName:a?\"17px\":\"21px\",logoStyle:\"flex:none; display:flex; align-items:center; gap:4px; height:44px; padding:0 2px; border:0; background:transparent; cursor:pointer; color:#ffffff; font-family:Inter, sans-serif; font-size:\"+(a?20:23)+\"px; font-weight:800; letter-spacing:-0.03em\",walletPad:a?\"14px\":\"18px\",featSideL:a?\"display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; text-align:center\":\"display:flex; align-items:center; gap:14px; min-width:0\",featSideR:a?\"display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; text-align:center\":\"display:flex; flex-direction:row-reverse; align-items:center; gap:14px; min-width:0\",hasFeatured:!!M,feat:L,featName:a?\"22px\":\"48px\",featScore:a?\"64px\":\"104px\",hasFavs:O.length>0,favs:O,favCount:O.length,hasLive:I.length>0,noLive:0===I.length,liveCards:I,liveGrid:\"display:grid; grid-template-columns:\"+(a?\"1fr\":\"repeat(2, minmax(0,1fr))\")+\"; gap:12px\",soonRows:z,soonCount:N.length,compTiles:A,compGrid:\"display:grid; grid-template-columns:\"+(a?\"repeat(2, minmax(0,1fr))\":\"repeat(4, minmax(0,1fr))\")+\"; gap:8px\",L:d,sportChips:E,compChips:P,hasCompChips:P.length>0,liveGroups:U,liveEmpty:_,emptySoon:V,emptyTitle:\"all\"===e.sport?\"Nothing live right now\":\"No live \"+G,emptySub:\"all\"===e.sport?\"Matches show up here the moment they kick off. Here’s what starts next.\":\"Nothing in play for this sport. Here’s what starts next.\",fbTabs:W,fb:Y,fbSections:Z,fbName:a?\"32px\":\"44px\",mt:se,sbGap:a?\"8px\":\"28px\",sbName:a?\"22px\":\"40px\",sbScore:a?\"72px\":\"128px\",sbKo:a?\"48px\":\"72px\",slip:Se,mb:Le,tabSlip:Ie,tabBets:Ne,autoHigher:e.autoHigher,autoTrack:\"width:38px; height:22px; flex:none; border-radius:11px; padding:2px; box-sizing:border-box; background:\"+(e.autoHigher?\"#c3f4f1\":\"#233036\")+\"; display:flex; justify-content:\"+(e.autoHigher?\"flex-end\":\"flex-start\")+\"; transition:background .2s\",autoKnob:\"width:18px; height:18px; border-radius:50%; background:\"+(e.autoHigher?\"#0b1a21\":\"#8a96a4\"),slipTabStyle:ze(Ie),betsTabStyle:ze(Ne),slipCountStyle:Ae(e.slip.length>0),betsCountStyle:Ae(!1),slipClass:a?\"\":\"hb-panel\",slipWrap:a?\"position:absolute; inset:0; z-index:40; display:\"+(e.sheet?\"flex\":\"none\")+\"; flex-direction:column; background:rgba(3,9,12,.72)\":\"flex:none; width:360px; display:flex; flex-direction:column; background:#0b1a21; border-left:1px solid #1a2b33\",slipPanel:a?\"flex:none; height:92%; display:flex; flex-direction:column; background:#0b1a21; border-radius:16px 16px 0 0; border-top:1px solid #233036; overflow:hidden; animation:hbSheet .3s ease-out\":\"flex:1; min-height:0; display:flex; flex-direction:column\",showSlipBar:(e.slip.length>0||ye)&&!e.sheet,barBg:de?\"#f8d466\":\"#c3f4f1\",barTitle:ye?Se.placedTitle:de?\"Odds changed\":ce?\"Suspended\":\"Bet slip\",barSub:ye?\"Tap for your receipt\":re>0?\"Stake \"+this.f2(re)+\" · returns \"+this.f2(pe):\"Add a stake to place\",bn:{home:Oe(\"home\"===e.page&&!e.sheet),live:Oe(\"live\"===e.page&&!e.sheet),football:Oe(\"football\"===e.page&&!e.sheet),bets:Oe(e.sheet&&Ne),search:Oe(!1)},hasToast:!!e.toast,toast:e.toast||\"\",toastStyle:\"position:absolute; left:50%; transform:translateX(-50%); bottom:\"+(a?e.slip.length||ye?138:76:24)+\"px; z-index:60; display:flex; align-items:center; gap:10px; max-width:calc(100% - 32px); padding:12px 16px; border-radius:8px; background:#13394c; border:1px solid #2b6a6f; color:#f2fbff; font-size:14px; font-weight:700; box-shadow:0 14px 36px rgba(0,0,0,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; animation:hbIn .25s ease-out\",mainRef:e=>{this._mainEl=e},toggleNav:()=>this.setState({navOpen:!e.navOpen}),goHome:()=>this.go(\"home\"),goLive:()=>this.go(\"live\",{sport:\"all\",liveComp:\"all\"}),goFootball:()=>this.go(\"football\"),goTennis:()=>this.goSport(\"tennis\"),goBasketball:()=>this.goSport(\"basketball\"),goHockey:()=>this.goSport(\"icehockey\"),goEsports:()=>this.goSport(\"esports\"),goSearch:()=>{this.go(\"home\"),setTimeout(()=>{this._searchEl&&this._searchEl.focus()},60)},openMyBets:()=>this.setState({slipTab:\"mybets\",sheet:!0}),openSlipNav:()=>this.setState({slipTab:\"slip\"}),openSheet:()=>this.setState({sheet:!0,slipTab:\"slip\"}),closeSheet:()=>this.setState({sheet:!1}),showSlipTab:()=>this.setState({slipTab:\"slip\"}),showBetsTab:()=>this.setState({slipTab:\"mybets\"}),removeSusp:()=>this.removeSusp(),clearSlip:()=>this.setState({slip:[],stakes:{},status:\"idle\"}),toggleAuto:()=>this.setState({autoHigher:!e.autoHigher}),reuse:()=>this.setState({slip:e.receipt.map(t=>this.entry(t.selId,e.odds)),stakes:{},status:\"idle\"}),viewBets:()=>this.setState({slip:[],stakes:{},status:\"idle\",slipTab:\"mybets\",betsTab:\"open\"}),done:()=>this.setState({slip:[],stakes:{},status:\"idle\",sheet:!1}),depositToast:()=>this.say(\"Wallet opens here in the full product.\")}}}";</script>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var props = {};
+  if (q.get('scenario')) props.scenario = q.get('scenario');
+  if (q.get('page')) props.startPage = q.get('page');
+  if (q.get('slip')) props.startSlip = q.get('slip');
+  if (q.get('tab')) props.startTab = q.get('tab');
+  if (q.get('sheet')) props.sheet = true;
+  DCRuntime.mount(document.getElementById('tpl'), window.__DC_CODE, props, document.getElementById('app'));
+  var p = document.getElementById('proto'), b = p.querySelector('button');
+  b.addEventListener('click', function(){ var o = p.classList.toggle('open'); b.setAttribute('aria-expanded', o); });
+  document.addEventListener('click', function(e){ if (!p.contains(e.target)) { p.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); } });
+})();
+</script>
+</body>
+</html>
